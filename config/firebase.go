@@ -39,3 +39,4 @@ func InitFirebase() {
 
 	log.Println("Successfully added data to Firestore")
 }
+
