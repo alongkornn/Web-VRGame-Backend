@@ -14,14 +14,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// type AuthService struct {
-// 	db *firestore.Client
-// }
-
-// func NewAuthService(db *firestore.Client) *AuthService {
-// 	return &AuthService{db: db}
-// }
-
 func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(registerDTO.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -46,7 +38,6 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 
 	_, _, err = config.DB.Collection("User").Add(ctx, user)
     if err != nil {
-        // Print error to the console for debugging
         fmt.Printf("Error adding document: %v\n", err)
         return http.StatusInternalServerError, errors.New("failed to register user")
     }

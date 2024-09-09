@@ -9,13 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// type AuthController struct {
-// 	authService *services.AuthService
-// }
-
-// func NewAuthController(authService *services.AuthService) *AuthController {
-//     return &AuthController{authService: authService}
-// }
 
 func Register(ctx echo.Context) error {
 	var registerDTO dto.RegisterDTO
