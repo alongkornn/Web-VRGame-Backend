@@ -3,40 +3,27 @@ package config
 import (
 	"context"
 	"log"
-
-	firebase "firebase.google.com/go"
-	"firebase.google.com/go/db"
+	"time"
+	"cloud.google.com/go/firestore"
 	_ "golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 )
 
-var Client *db.Client
+var DB *firestore.Client
 
 func InitFirebase() {
+	var err error
 	// โหลด serviceAccountKey.json 
 	sa := option.WithCredentialsFile("/Users/alongkorn/Desktop/gamevr-88a69-firebase-adminsdk-ukt0n-a862e722f6.json")
 
-	// สร้าง Firebase App
-	app, err := firebase.NewApp(context.Background(), nil, sa)
-	if err != nil {
-		log.Fatalf("error initializing app: %v\n", err)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
 
-	// สร้าง Firestore Client
-	client, err := app.Firestore(context.Background())
-	if err != nil {
-		log.Fatalf("error initializing database client: %v\n", err)
-	}
-	defer client.Close()
+	DB, err = firestore.NewClient(ctx, "gamevr-88a69", sa)
+    if err != nil {
+        log.Fatalf("Failed to create Firestore client: %v", err)
+    }
 
-	// ทดสอบการเชื่อมต่อกับ Firestore
-	_, _, err = client.Collection("testCollection").Add(context.Background(), map[string]interface{}{
-		"testField": "testValue",
-	})
-	if err != nil {
-		log.Fatalf("Failed to add data to Firestore: %v\n", err)
-	}
-
-	log.Println("Successfully added data to Firestore")
+	log.Println("Successfully connectd to firestore")
 }
 
