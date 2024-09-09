@@ -23,8 +23,9 @@ type User struct {
 	Password   string    `json:"password" firestore:"password" validate:"required"`
 	Class      string    `json:"class" firestore:"class" validate:"required"`
 	Number     string    `json:"number" firestore:"number" validate:"required"`
-	Role       Role      `json:"role" firestore:"role"`
 	Score      int       `json:"score" firestore:"score"`
+	Level      string    `json:"level" firestore:"level"`
+	Role       Role      `json:"role" firestore:"role"`
 	Status     Status    `json:"status" firestore:"status"`
 	CreatedAt  time.Time `json:"created_at" firestore:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at" firestore:"updated_at"`
