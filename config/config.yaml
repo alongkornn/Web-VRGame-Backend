@@ -1,0 +1,8 @@
+app:
+  env: "development"
+  port: 8080
+  prefix: "/api"
+  debug: true
+
+jwt:
+  secret_key: w@dPQ7@M%auWxDNM!#9S
