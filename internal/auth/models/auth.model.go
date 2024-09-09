@@ -2,6 +2,9 @@ package models
 
 import (
 	"time"
+
+	"github.com/alongkornn/Web-VRGame-Backend/config"
+	"github.com/golang-jwt/jwt"
 )
 
 type Role string
@@ -34,3 +37,11 @@ type User struct {
 	Is_Deleted bool      `json:"is_deleted" firestore:"is_deleted"`
 }
 
+func GenerateToken(userID string) (string, error) {
+    claims := jwt.MapClaims{
+        "user_id": userID,
+        "exp":     time.Now().Add(time.Hour * 24).Unix(),
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
+}

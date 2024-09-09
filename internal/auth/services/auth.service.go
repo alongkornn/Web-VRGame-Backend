@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
@@ -43,4 +42,31 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
     }
 
 	return http.StatusOK, nil
+}
+
+func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int, error) {
+	hasUser := config.DB.Collection("User").Where("email", "==", email).Limit(1)
+	doc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.New("user not found")
+	}
+
+	var user models.User
+	doc.DataTo(&user)
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, http.StatusUnauthorized, errors.New("invalid password")
+	}
+
+	token, err := models.GenerateToken(user.ID)
+	if err != nil {
+		return nil, http.StatusUnauthorized, errors.New("failed to create token")
+	}
+
+	data := dto.ResponseLogin{
+		Token: token,
+	}
+
+	return &data, http.StatusOK, nil
 }

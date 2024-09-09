@@ -1,5 +1,6 @@
 package dto
 
+
 type RegisterDTO struct {
 	FirstName string `json:"firstname" validate:"required"`
 	LastName  string `json:"lastname" validate:"required"`
@@ -12,4 +13,8 @@ type RegisterDTO struct {
 type LoginDTO struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type ResponseLogin struct {
+	Token string
 }
