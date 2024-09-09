@@ -1,6 +1,6 @@
 app:
   env: "development"
-  port: 8080
+  port: 8000
   prefix: "/api"
   debug: true
 
