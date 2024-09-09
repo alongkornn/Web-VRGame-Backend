@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"strings"
-
 	"github.com/spf13/viper"
 )
 
