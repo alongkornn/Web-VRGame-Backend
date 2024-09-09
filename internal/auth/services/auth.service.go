@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
@@ -36,10 +37,10 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 	}
 
 	_, _, err = config.DB.Collection("User").Add(ctx, user)
-    if err != nil {
-        fmt.Printf("Error adding document: %v\n", err)
-        return http.StatusInternalServerError, errors.New("failed to register user")
-    }
+	if err != nil {
+		fmt.Printf("Error adding document: %v\n", err)
+		return http.StatusInternalServerError, errors.New("failed to register user")
+	}
 
 	return http.StatusOK, nil
 }
@@ -59,7 +60,7 @@ func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int
 		return nil, http.StatusUnauthorized, errors.New("invalid password")
 	}
 
-	token, err := models.GenerateToken(user.ID)
+	token, err := models.GenerateToken(&user)
 	if err != nil {
 		return nil, http.StatusUnauthorized, errors.New("failed to create token")
 	}

@@ -37,9 +37,10 @@ type User struct {
 	Is_Deleted bool      `json:"is_deleted" firestore:"is_deleted"`
 }
 
-func GenerateToken(userID string) (string, error) {
+func GenerateToken(user *User) (string, error) {
     claims := jwt.MapClaims{
-        "user_id": userID,
+        "user_id": user.ID,
+		"role": user.Role,
         "exp":     time.Now().Add(time.Hour * 24).Unix(),
     }
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
