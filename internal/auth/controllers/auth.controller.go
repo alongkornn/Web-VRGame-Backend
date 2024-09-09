@@ -22,3 +22,17 @@ func Register(ctx echo.Context) error {
 	}
 	return utils.SendSuccess(ctx, status, "Created User Successfully", nil)
 }
+
+
+func Login(ctx echo.Context) error {
+	var loginDTO dto.LoginDTO
+	if err := ctx.Bind(&loginDTO); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
+	}
+
+	data, status, err := services.Login(loginDTO.Email, loginDTO.Password, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+	return utils.SendSuccess(ctx, status, "Successfully to Login", data)
+}
