@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
-	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/routes"
+	authRoute "github.com/alongkornn/Web-VRGame-Backend/internal/auth/routes"
+	scoreRoute "github.com/alongkornn/Web-VRGame-Backend/internal/score/routes"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,8 +22,11 @@ func main() {
 		return nil
 	})
 
-	routes.AuthRoute(globalGroup)
+
 	
+	authRoute.AuthRoute(globalGroup)
+	scoreRoute.ScoreRoute(globalGroup)
+
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))
