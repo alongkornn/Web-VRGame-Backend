@@ -17,7 +17,7 @@ const (
 
 const (
 	Pending Status = "pending"
-	Done    Status = "done"
+	Approved    Status = "approved"
 )
 
 type User struct {
