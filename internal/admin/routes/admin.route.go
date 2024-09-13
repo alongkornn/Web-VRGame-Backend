@@ -9,4 +9,5 @@ func AdminRoute(e *echo.Group) {
 	adminGroup := e.Group("/admin")
 
 	adminGroup.PUT("/approve/:id", controllers.ApprovedRegister)
+	adminGroup.DELETE("/delete/:id", controllers.RemoveUser)
 }
