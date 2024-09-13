@@ -12,7 +12,7 @@ import (
 func GetUserByID(id string, ctx context.Context) (*models.User, int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", models.Done).
+		Where("status", "==", models.Approved).
 		Where("id", "==", id).
 		Limit(1)
 
