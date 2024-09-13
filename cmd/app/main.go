@@ -22,8 +22,11 @@ func main() {
 		return nil
 	})
 
+
+	
 	authRoute.AuthRoute(globalGroup)
 	scoreRoute.ScoreRoute(globalGroup)
+
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))
