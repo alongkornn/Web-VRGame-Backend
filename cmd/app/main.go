@@ -22,6 +22,7 @@ func main() {
 	})
 
 	routes.AuthRoute(globalGroup)
+	
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))
