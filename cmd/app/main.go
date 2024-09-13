@@ -6,6 +6,7 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	authRoute "github.com/alongkornn/Web-VRGame-Backend/internal/auth/routes"
 	scoreRoute "github.com/alongkornn/Web-VRGame-Backend/internal/score/routes"
+	userRoute "github.com/alongkornn/Web-VRGame-Backend/internal/user/routes"
 	"github.com/labstack/echo/v4"
 )
 
@@ -26,6 +27,7 @@ func main() {
 	
 	authRoute.AuthRoute(globalGroup)
 	scoreRoute.ScoreRoute(globalGroup)
+	userRoute.UserRoute(globalGroup)
 
 
 	port := config.GetEnv("app.port")

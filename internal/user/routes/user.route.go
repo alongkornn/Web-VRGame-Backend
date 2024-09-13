@@ -9,4 +9,6 @@ func UserRoute(e *echo.Group) {
 	userGroup := e.Group("/user")
 
 	userGroup.POST("/get/:id", controllers.GetUserByID)
+	userGroup.POST("/get", controllers.GetAllUser)
+	userGroup.POST("/get/pending", controllers.GetUserPending)
 }
