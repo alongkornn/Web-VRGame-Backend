@@ -16,8 +16,8 @@ const (
 )
 
 const (
-	Pending Status = "pending"
-	Approved    Status = "approved"
+	Pending  Status = "pending"
+	Approved Status = "approved"
 )
 
 type User struct {
@@ -29,7 +29,7 @@ type User struct {
 	Class      string    `json:"class" firestore:"class"`
 	Number     string    `json:"number" firestore:"number"`
 	Score      int       `json:"score" firestore:"score"`
-	Level      int    `json:"level" firestore:"level"`
+	Level      int       `json:"level" firestore:"level"`
 	Role       Role      `json:"role" firestore:"role"`
 	Status     Status    `json:"status" firestore:"status"`
 	CreatedAt  time.Time `json:"created_at" firestore:"created_at"`
@@ -38,11 +38,11 @@ type User struct {
 }
 
 func GenerateToken(user *User) (string, error) {
-    claims := jwt.MapClaims{
-        "user_id": user.ID,
-		"role": user.Role,
-        "exp":     time.Now().Add(time.Hour * 24).Unix(),
-    }
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"role":    user.Role,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
 }
