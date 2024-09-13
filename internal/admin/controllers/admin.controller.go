@@ -24,3 +24,16 @@ func ApprovedRegister(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to approved", nil)
 }
+
+// remove user
+func RemoveUser(ctx echo.Context) error {
+	id := ctx.Param("id")
+
+	status, err := services.RemoveUser(id, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+
+	return utils.SendSuccess(ctx, status, "Successfully to Delete", nil)
+}
