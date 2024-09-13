@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
@@ -104,67 +103,4 @@ func GetUser(ctx context.Context) ([]*models.User, int, error) {
 	}
 
 	return users, http.StatusOK, nil
-}
-
-// admin
-func CreateAdmin(id string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").Where("id", "==", id).Limit(1)
-	doc, err := hasUser.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusBadRequest, errors.New("user not found")
-	}
-
-	var user models.User
-	doc.DataTo(&user)
-
-	// อัปเดตข้อมูลของ user ใน Firestore
-	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"role": models.Admin,
-	}, firestore.MergeAll)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to update user role")
-	}
-
-	return http.StatusCreated, nil
-}
-
-func RemoveAdmin(id string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").Where("id", "==", id).Limit(1)
-	doc, err := hasUser.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusBadRequest, errors.New("user not found")
-	}
-
-	var user models.User
-	doc.DataTo(&user)
-
-	// อัปเดตข้อมูลของ user ใน Firestore
-	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"role": models.Player,
-	}, firestore.MergeAll)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to update user role")
-	}
-
-	return http.StatusCreated, nil
-}
-
-func RemoveUser(id string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").Where("id", "==", id).Limit(1)
-	doc, err := hasUser.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusBadRequest, errors.New("user not found")
-	}
-
-	var user models.User
-	doc.DataTo(&user)
-
-	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"is_deleted": true,
-	}, firestore.MergeAll)
-	if err != nil {
-		return http.StatusBadRequest, errors.New("failed to delete")
-	}
-
-	return http.StatusOK, nil
 }
