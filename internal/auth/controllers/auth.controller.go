@@ -47,36 +47,3 @@ func GetUser(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to Fetch User", users)
 }
 
-// admin
-func CreateAdmin(ctx echo.Context) error {
-	id := ctx.Param("id")
-
-	status, err := services.CreateAdmin(id, ctx.Request().Context())
-	if err != nil {
-		return utils.SendError(ctx, status, err.Error(), nil)
-	}
-
-	return utils.SendSuccess(ctx, status, "Successfully to Created", nil)
-}
-
-func RemoveAdmin(ctx echo.Context) error {
-	id := ctx.Param("id")
-
-	status, err := services.CreateAdmin(id, ctx.Request().Context())
-	if err != nil {
-		return utils.SendError(ctx, status, err.Error(), nil)
-	}
-
-	return utils.SendSuccess(ctx, status, "Successfully to Delete", nil)
-}
-
-func RemoveUser(ctx echo.Context) error {
-	id := ctx.Param("id")
-
-	status, err := services.RemoveUser(id, ctx.Request().Context())
-	if err != nil {
-		return utils.SendError(ctx, status, err.Error(), nil)
-	}
-
-	return utils.SendSuccess(ctx, status, "Successfully to Delete", nil)
-}

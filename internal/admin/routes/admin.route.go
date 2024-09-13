@@ -5,9 +5,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func AdminRoute(e *echo.Group) {
-	adminGroup := e.Group("/admin")
+func AdminRoute(g *echo.Group) {
+	adminGroup := g.Group("/admin")
 
+	adminGroup.POST("/create/:id", controllers.CreateAdmin)
+	adminGroup.POST("/get/:id", controllers.GetAdminByID)
+	adminGroup.POST("/get", controllers.GetAllAdmin)
 	adminGroup.PUT("/approve/:id", controllers.ApprovedRegister)
-	adminGroup.DELETE("/delete/:id", controllers.RemoveUser)
+	adminGroup.DELETE("/delete/user/:id", controllers.RemoveUser)
+	adminGroup.DELETE("/delete/admin/:id", controllers.RemoveAdmin)
+
+	// protectedGroup := g.Group("")
+	// adminGroup := protectedGroup.Group("/admin")
+    // adminGroup.Use(middleware.RoleBasedMiddleware("admin"))
 }
