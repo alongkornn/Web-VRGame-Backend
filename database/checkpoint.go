@@ -23,6 +23,8 @@ func CreateCheckpointIfNotExists(client *firestore.Client, ctx context.Context) 
 			ID:         uuid.New().String(),
 			Name:       "ด่านหนึ่ง",
 			Category:   models.Projectile,
+			MaxScore:   100,
+			PassScore:  50,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 			Is_Deleted: false,
