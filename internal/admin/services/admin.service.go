@@ -7,7 +7,9 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
+	"github.com/alongkornn/Web-VRGame-Backend/internal/admin/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/iterator"
 )
 
@@ -30,7 +32,7 @@ func ApprovedRegister(id, approved string, ctx context.Context) (int, error) {
 	}
 
 	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"status": approved,
+		"status":     approved,
 		"updated_at": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 	if err != nil {
@@ -84,7 +86,7 @@ func RemoveAdmin(id string, ctx context.Context) (int, error) {
 	}
 
 	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"role": models.Player,
+		"role":       models.Player,
 		"updated_at": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 	if err != nil {
@@ -99,7 +101,7 @@ func GetAllAdmin(ctx context.Context) ([]*models.User, int, error) {
 		Where("role", "==", models.Admin).
 		Where("is_deleted", "==", false).
 		Documents(ctx)
-	
+
 	defer iter.Stop()
 
 	var users []*models.User
@@ -163,7 +165,7 @@ func CreateAdmin(id, role string, ctx context.Context) (int, error) {
 
 	// อัปเดตข้อมูลของ user ใน Firestore
 	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"role": models.Admin,
+		"role":       models.Admin,
 		"updated_at": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 	if err != nil {
@@ -173,3 +175,91 @@ func CreateAdmin(id, role string, ctx context.Context) (int, error) {
 	return http.StatusCreated, nil
 }
 
+func UpdateDataAdmin(id string, updateDTO dto.UpdateDTO, ctx context.Context) (int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", models.Admin).
+		Where("id", "==", id).
+		Limit(1)
+
+	doc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("admin not found")
+	}
+
+	var admin models.User
+	err = doc.DataTo(&admin)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	updateData := make(map[string]interface{})
+
+	if updateDTO.FirstName != "" {
+		updateData["firstname"] = updateDTO.FirstName
+	}
+
+	if updateDTO.LastName != "" {
+		updateData["lastname"] = updateDTO.LastName
+	}
+
+	if updateDTO.Class != "" {
+		updateData["class"] = updateDTO.Class
+	}
+
+	if updateDTO.Number != "" {
+		updateData["number"] = updateDTO.Number
+	}
+
+	updateData["updated_at"] = firestore.ServerTimestamp
+
+	if len(updateData) == 0 {
+		return http.StatusBadRequest, errors.New("no data to update")
+	}
+
+	// อัปเดตเฉพาะข้อมูลที่มีการเปลี่ยนแปลง
+	_, err = doc.Ref.Set(ctx, updateData, firestore.MergeAll)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func UpdatePasswordAdmin(id, password, newPassword string, ctx context.Context) (int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", models.Admin).
+		Where("id", "==", id).
+		Limit(1)
+
+	doc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("admin not found")
+	}
+
+	var admin models.User
+	err = doc.DataTo(&admin)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(password)); err != nil {
+		return http.StatusBadRequest, errors.New("invalid password")
+	}
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return http.StatusBadRequest, errors.New("failed to hash")
+	}
+
+	_, err = doc.Ref.Set(ctx, map[string]interface{}{
+		"password": hashPassword,
+		"updated_at": firestore.ServerTimestamp,
+	}, firestore.MergeAll)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}
