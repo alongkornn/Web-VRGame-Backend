@@ -83,3 +83,34 @@ func CreateAdmin(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to Created", nil)
 }
+
+func UpdateDataAdmin(ctx echo.Context) error {
+	id := ctx.Param("id")
+	var updateDTO dto.UpdateDTO
+	if err := ctx.Bind(&updateDTO); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
+	}
+
+	status, err := services.UpdateDataAdmin(id, updateDTO, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to update data", nil)
+}
+
+func UpdatePasswordAdmin(ctx echo.Context) error {
+	id := ctx.Param("id")
+
+	var updatePasswordDTO dto.UpdatePasswordDTO
+	if err := ctx.Bind(&updatePasswordDTO); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
+	}
+
+	status, err := services.UpdatePasswordAdmin(id, updatePasswordDTO.Password, updatePasswordDTO.NewPassword, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to change password", nil)
+}

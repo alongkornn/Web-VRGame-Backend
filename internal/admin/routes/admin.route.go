@@ -14,6 +14,7 @@ func AdminRoute(g *echo.Group) {
 	adminGroup.PUT("/approve/:id", controllers.ApprovedRegister)
 	adminGroup.DELETE("/delete/user/:id", controllers.RemoveUser)
 	adminGroup.DELETE("/delete/admin/:id", controllers.RemoveAdmin)
+	adminGroup.PUT("/update/admin/:id", controllers.UpdateDataAdmin)
 
 	// protectedGroup := g.Group("")
 	// adminGroup := protectedGroup.Group("/admin")
