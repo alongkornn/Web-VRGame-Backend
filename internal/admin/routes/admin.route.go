@@ -15,6 +15,7 @@ func AdminRoute(g *echo.Group) {
 	adminGroup.DELETE("/delete/user/:id", controllers.RemoveUser)
 	adminGroup.DELETE("/delete/admin/:id", controllers.RemoveAdmin)
 	adminGroup.PUT("/update/admin/:id", controllers.UpdateDataAdmin)
+	adminGroup.PUT("/updatepassword/admin/:id", controllers.UpdatePasswordAdmin)
 
 	// protectedGroup := g.Group("")
 	// adminGroup := protectedGroup.Group("/admin")
