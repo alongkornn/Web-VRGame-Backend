@@ -31,6 +31,7 @@ func ApprovedRegister(id, approved string, ctx context.Context) (int, error) {
 
 	_, err = doc.Ref.Set(ctx, map[string]interface{}{
 		"status": approved,
+		"updated_at": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 	if err != nil {
 		return http.StatusBadRequest, errors.New("failed to approve")
@@ -57,6 +58,7 @@ func RemoveUser(id string, ctx context.Context) (int, error) {
 	}
 	_, err = doc.Ref.Set(ctx, map[string]interface{}{
 		"is_deleted": true,
+		"updated_at": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 	if err != nil {
 		return http.StatusBadRequest, err
@@ -83,6 +85,7 @@ func RemoveAdmin(id string, ctx context.Context) (int, error) {
 
 	_, err = doc.Ref.Set(ctx, map[string]interface{}{
 		"role": models.Player,
+		"updated_at": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 	if err != nil {
 		return http.StatusBadRequest, err
@@ -161,6 +164,7 @@ func CreateAdmin(id, role string, ctx context.Context) (int, error) {
 	// อัปเดตข้อมูลของ user ใน Firestore
 	_, err = doc.Ref.Set(ctx, map[string]interface{}{
 		"role": models.Admin,
+		"updated_at": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("failed to update user role")
@@ -168,3 +172,4 @@ func CreateAdmin(id, role string, ctx context.Context) (int, error) {
 
 	return http.StatusCreated, nil
 }
+
