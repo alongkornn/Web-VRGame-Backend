@@ -4,7 +4,9 @@ import (
 	"context"
 	"log"
 	"time"
+
 	"cloud.google.com/go/firestore"
+	"github.com/alongkornn/Web-VRGame-Backend/database"
 	_ "golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 )
@@ -23,6 +25,7 @@ func InitFirebase() {
     if err != nil {
         log.Fatalf("Failed to create Firestore client: %v", err)
     }
+	database.CreateUserIfNotExists(DB, ctx)
 
 	log.Println("Successfully connectd to firestore")
 }

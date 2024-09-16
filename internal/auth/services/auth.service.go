@@ -10,6 +10,7 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/iterator"
@@ -63,7 +64,7 @@ func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int
 		return nil, http.StatusUnauthorized, errors.New("invalid password")
 	}
 
-	token, err := models.GenerateToken(&user)
+	token, err := generateToken(&user)
 	if err != nil {
 		return nil, http.StatusUnauthorized, errors.New("failed to create token")
 	}
@@ -103,4 +104,14 @@ func GetUser(ctx context.Context) ([]*models.User, int, error) {
 	}
 
 	return users, http.StatusOK, nil
+}
+
+func generateToken(user *models.User) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"role":    user.Role,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
 }
