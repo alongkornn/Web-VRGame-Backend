@@ -34,6 +34,7 @@ type User struct {
 	CreatedAt  time.Time `json:"created_at" firestore:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at" firestore:"updated_at"`
 	Is_Deleted bool      `json:"is_deleted" firestore:"is_deleted"`
+
 }
 
 
