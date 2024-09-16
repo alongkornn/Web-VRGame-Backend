@@ -96,7 +96,7 @@ func GetAllAdmin(ctx context.Context) ([]*models.User, int, error) {
 		Where("role", "==", models.Admin).
 		Where("is_deleted", "==", false).
 		Documents(ctx)
-	
+
 	defer iter.Stop()
 
 	var users []*models.User
