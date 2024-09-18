@@ -29,6 +29,7 @@ func GetUserByID(id string, ctx context.Context) (*auth_models.User, int, error)
 	return user, http.StatusOK, nil
 }
 
+
 func AddPlayerInCheckpoint(checkpointID, userID string, ctx context.Context) (int, error) {
 	checkpointQuery := config.DB.Collection("Checkpoint").
 		Where("is_deleted", "==", false).
@@ -74,4 +75,64 @@ func AddPlayerInCheckpoint(checkpointID, userID string, ctx context.Context) (in
 	}
 
 	return http.StatusOK, nil
+
+func GetAllUser(ctx context.Context) ([]*models.User, int, error) {
+	iter := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("status", "==", models.Approved).
+		Documents(ctx)
+
+	defer iter.Stop()
+
+	var users []*models.User
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		var user models.User
+		err = doc.DataTo(&user)
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		users = append(users, &user)
+	}
+	return users, http.StatusOK, nil
+}
+
+// user pending
+func GetUserPending(ctx context.Context) ([]*models.User, int, error) {
+	iter := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("status", "==", models.Pending).
+		Documents(ctx)
+	
+	defer iter.Stop()
+
+	var users []*models.User
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			if len(users) == 0 {
+				return nil, http.StatusNotFound, errors.New("no pending users found")
+			}
+			break
+		}
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		var user models.User
+		err = doc.DataTo(&user)
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		users = append(users, &user)
+	}
+	return users, http.StatusOK, nil
 }

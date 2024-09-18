@@ -32,6 +32,7 @@ func main() {
 	checkpointRoute.CheckpointRoute(globalGroup)
 	userRoute.UserRoute(globalGroup)
 
+
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))
 	fmt.Println("Server started on port " + port)
