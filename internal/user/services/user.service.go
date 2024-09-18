@@ -80,6 +80,30 @@ func AddPlayerInCheckpoint(checkpointID, userID string, ctx context.Context) (in
 }
 
 func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
+		iter := config.DB.Collection("User").
+			Where("is_deleted", "==", false).
+			Where("status", "==", auth_models.Approved).
+			Documents(ctx)
+	
+		defer iter.Stop()
+	
+		var users []*auth_models.User
+		for {
+			doc, err := iter.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				return nil, http.StatusInternalServerError, err
+			}
+			var user auth_models.User
+			err = doc.DataTo(&user)
+			if err != nil {
+				return nil, http.StatusInternalServerError, err
+			}
+	
+			users = append(users, &user)
+
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
 		Where("status", "==", auth_models.Approved).
@@ -100,12 +124,10 @@ func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
 		err = doc.DataTo(&user)
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
-		}
 
-		users = append(users, &user)
+		}
+		return users, http.StatusOK, nil
 	}
-	return users, http.StatusOK, nil
-}
 
 // user pending
 func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
