@@ -3,15 +3,19 @@ package dto
 import (
 	"github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
 )
+
 type CheckpointDTO struct {
-	CheckpointID     string `json:"checkpointID" validate:"required"`
-	UserID string `json:"userID" validate:"required"`
+	CheckpointID string `json:"checkpointID"`
+	UserID       string `json:"userID"`
 }
 
-
 type CreateCheckpointsDTO struct {
-	Name        string    `json:"name" firestore:"name"`
-	MaxScore    int       `json:"max_score" firestore:"max_score"`
-	PassScore   int       `json:"pass_score" firestore:"pass_score"`
-	Category    models.Category  `json:"category" firestore:"category"`
+	Name      string          `json:"name"`
+	MaxScore  int             `json:"max_score"`
+	PassScore int             `json:"pass_score"`
+	Category  models.Category `json:"category"`
+}
+
+type GetCheckpointWithCategoryDTO struct {
+	Category string `json:"category"`
 }

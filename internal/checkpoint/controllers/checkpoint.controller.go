@@ -44,3 +44,17 @@ func CreateCheckpoint(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to created", nil)
 }
+
+func GetCheckpointWithCategory(ctx echo.Context) error {
+	var categoryDTO dto.GetCheckpointWithCategoryDTO
+	if err := ctx.Bind(&categoryDTO); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
+	}
+
+	checkpoints, status, err := services.GetCheckpointWithCategory(categoryDTO.Category, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to get checkpoin with catery", checkpoints)
+}
