@@ -33,6 +33,7 @@ type User struct {
 	Status               Status               `json:"status" firestore:"status"`
 	CurrentCheckpoint    models.Checkpoints   `json:"current_checkpoint,omitempty" firestore:"current_checkpoint,omitempty"`
 	CompletedCheckpoints []models.Checkpoints `json:"completed_checkpoints,omitempty" firestore:"completed_checkpoints,omitempty"`
+	Time                 string               `json:"time,omitempty" firestore:"time,omitempty"`
 	CreatedAt            time.Time            `json:"created_at" firestore:"created_at"`
 	UpdatedAt            time.Time            `json:"updated_at" firestore:"updated_at"`
 	Is_Deleted           bool                 `json:"is_deleted" firestore:"is_deleted"`
