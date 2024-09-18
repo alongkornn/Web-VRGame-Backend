@@ -9,6 +9,8 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	checkpoint_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
+	"github.com/alongkornn/Web-VRGame-Backend/internal/user/dto"
+	"google.golang.org/api/iterator"
 )
 
 func GetUserByID(id string, ctx context.Context) (*auth_models.User, int, error) {
@@ -75,16 +77,17 @@ func AddPlayerInCheckpoint(checkpointID, userID string, ctx context.Context) (in
 	}
 
 	return http.StatusOK, nil
+}
 
-func GetAllUser(ctx context.Context) ([]*models.User, int, error) {
+func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", models.Approved).
+		Where("status", "==", auth_models.Approved).
 		Documents(ctx)
 
 	defer iter.Stop()
 
-	var users []*models.User
+	var users []*auth_models.User
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -93,7 +96,7 @@ func GetAllUser(ctx context.Context) ([]*models.User, int, error) {
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
-		var user models.User
+		var user auth_models.User
 		err = doc.DataTo(&user)
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
@@ -105,15 +108,15 @@ func GetAllUser(ctx context.Context) ([]*models.User, int, error) {
 }
 
 // user pending
-func GetUserPending(ctx context.Context) ([]*models.User, int, error) {
+func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", models.Pending).
+		Where("status", "==", auth_models.Pending).
 		Documents(ctx)
 	
 	defer iter.Stop()
 
-	var users []*models.User
+	var users []*auth_models.User
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -126,7 +129,7 @@ func GetUserPending(ctx context.Context) ([]*models.User, int, error) {
 			return nil, http.StatusInternalServerError, err
 		}
 
-		var user models.User
+		var user auth_models.User
 		err = doc.DataTo(&user)
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
@@ -135,4 +138,46 @@ func GetUserPending(ctx context.Context) ([]*models.User, int, error) {
 		users = append(users, &user)
 	}
 	return users, http.StatusOK, nil
+}
+
+func UpdateUser(id string, updateUserDTO dto.UpdateUserDTO, ctx context.Context) (int, error) {
+	hasUser := config.DB.Collection("User").Where("is_deleted", "==", false).Where("role", "==", auth_models.Player).Where("id", "==", id).Limit(1)
+	userDoc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("user not found")
+	}
+
+	updateUser := make(map[string]interface{})
+
+	if updateUserDTO.FirstName != "" {
+		updateUser["firstname"] = updateUserDTO.FirstName
+	}
+
+	if updateUserDTO.LastName != "" {
+		updateUser["lastname"] = updateUserDTO.LastName
+	}
+
+	if updateUserDTO.Class != "" {
+		updateUser["class"] = updateUserDTO.Class
+	}
+
+	if updateUserDTO.Number != "" {
+		updateUser["number"] = updateUserDTO.Number
+	}
+
+	updateUser["updated_at"] = firestore.ServerTimestamp
+
+	var user auth_models.User
+	if err := userDoc.DataTo(&user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+
+
+	_, err = userDoc.Ref.Set(ctx, updateUser, firestore.MergeAll)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	
+	return http.StatusOK, nil
 }
