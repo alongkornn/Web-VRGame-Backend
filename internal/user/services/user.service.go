@@ -62,6 +62,7 @@ func AddPlayerInCheckpoint(checkpointID, userID string, ctx context.Context) (in
 	
 
 	player := checkpoint_models.Player{
+		ID: user.ID,
 		Name:  user.FirstName,
 		Score: user.Score,
 	}
