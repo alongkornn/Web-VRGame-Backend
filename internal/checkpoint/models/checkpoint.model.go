@@ -25,6 +25,7 @@ type Checkpoints struct {
 }
 
 type Player struct {
+	ID    string `json:"id" firestore:"id"`
 	Name  string `json:"name" firestore:"name"`
 	Score int    `json:"score" firestore:"score"`
 	Time  string `json:"time" firestore:"time"`
