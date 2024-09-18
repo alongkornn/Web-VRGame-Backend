@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"net/http"
+
 	"github.com/alongkornn/Web-VRGame-Backend/config"
-	authRoute "github.com/alongkornn/Web-VRGame-Backend/internal/auth/routes"
-	scoreRoute "github.com/alongkornn/Web-VRGame-Backend/internal/score/routes"
 	adminRoute "github.com/alongkornn/Web-VRGame-Backend/internal/admin/routes"
+	authRoute "github.com/alongkornn/Web-VRGame-Backend/internal/auth/routes"
+	checkpointRoute "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/routes"
+	scoreRoute "github.com/alongkornn/Web-VRGame-Backend/internal/score/routes"
+	userRoute "github.com/alongkornn/Web-VRGame-Backend/internal/user/routes"
 	"github.com/labstack/echo/v4"
 )
 
@@ -23,11 +26,11 @@ func main() {
 		return nil
 	})
 
-
-	
 	authRoute.AuthRoute(globalGroup)
 	scoreRoute.ScoreRoute(globalGroup)
 	adminRoute.AdminRoute(globalGroup)
+	checkpointRoute.CheckpointRoute(globalGroup)
+	userRoute.UserRoute(globalGroup)
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))

@@ -15,17 +15,18 @@ var DB *firestore.Client
 
 func InitFirebase() {
 	var err error
-	// โหลด serviceAccountKey.json 
+	// โหลด serviceAccountKey.json
 	sa := option.WithCredentialsFile("/Users/alongkorn/Desktop/gamevr-88a69-firebase-adminsdk-ukt0n-a862e722f6.json")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-    defer cancel()
+	defer cancel()
 
 	DB, err = firestore.NewClient(ctx, "gamevr-88a69", sa)
-    if err != nil {
-        log.Fatalf("Failed to create Firestore client: %v", err)
-    }
+	if err != nil {
+		log.Fatalf("Failed to create Firestore client: %v", err)
+	}
 	database.CreateUserIfNotExists(DB, ctx)
+	database.CreateCheckpointIfNotExists(DB, ctx)
 
 	log.Println("Successfully connectd to firestore")
 }
