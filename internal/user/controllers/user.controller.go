@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// user approved
 func GetUserByID(ctx echo.Context) error {
 	id := ctx.Param("id")
 
@@ -17,6 +18,7 @@ func GetUserByID(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to get User", user)
 }
+
 
 // เวลาผู้เล่นเข้าเล่นด่านไหนให้เพิ่มผู้เล่นไปในด่านด้วย
 func AddPlayerInCheckpoint(ctx echo.Context) error {
@@ -30,3 +32,24 @@ func AddPlayerInCheckpoint(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Add player success", nil)
 } 
+
+func GetAllUser(ctx echo.Context) error {
+	users, status, err := services.GetAllUser(ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+
+	return utils.SendSuccess(ctx, status, "Successfully to get User", users)
+}
+
+// user pending
+
+func GetUserPending(ctx echo.Context) error {
+	users, status, err := services.GetUserPending(ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to get User status is pending", users)
+}
