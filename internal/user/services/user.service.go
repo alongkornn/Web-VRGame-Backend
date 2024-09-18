@@ -5,34 +5,76 @@ import (
 	"errors"
 	"net/http"
 
+	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
-	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
-	"google.golang.org/api/iterator"
+	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	checkpoint_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
 )
 
-// user approved
-func GetUserByID(id string, ctx context.Context) (*models.User, int, error) {
+func GetUserByID(id string, ctx context.Context) (*auth_models.User, int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", models.Approved).
+		Where("status", "==", auth_models.Approved).
 		Where("id", "==", id).
 		Limit(1)
 
 	doc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
-		if err == iterator.Done {
-			return nil, http.StatusNotFound, errors.New("user not found")
-		}
-		return nil, http.StatusInternalServerError, err
+		return nil, http.StatusBadRequest, errors.New("user not found")
 	}
-	var user *models.User
-	err = doc.DataTo(&user)
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
+
+	var user *auth_models.User
+	doc.DataTo(user)
 
 	return user, http.StatusOK, nil
 }
+
+
+func AddPlayerInCheckpoint(checkpointID, userID string, ctx context.Context) (int, error) {
+	checkpointQuery := config.DB.Collection("Checkpoint").
+		Where("is_deleted", "==", false).
+		Where("id", "==", checkpointID).
+		Limit(1)
+
+	checkpointDoc, err := checkpointQuery.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("checkpoint not found")
+	}
+
+	userQuery := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("id", "==", userID).
+		Where("role", "==", auth_models.Player).
+		Limit(1)
+
+	userDoc, err := userQuery.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("user not found")
+	}
+
+	var user auth_models.User
+	if err := userDoc.DataTo(&user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	
+
+	player := checkpoint_models.Player{
+		Name:  user.FirstName,
+		Score: user.Score,
+	}
+
+	_, err = checkpointDoc.Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "player_score",
+			Value: firestore.ArrayUnion(player),
+		},
+	})
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
 
 func GetAllUser(ctx context.Context) ([]*models.User, int, error) {
 	iter := config.DB.Collection("User").

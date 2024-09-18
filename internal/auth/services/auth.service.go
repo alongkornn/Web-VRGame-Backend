@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/iterator"
@@ -64,7 +64,7 @@ func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int
 		return nil, http.StatusUnauthorized, errors.New("invalid password")
 	}
 
-	token, err := models.GenerateToken(&user)
+	token, err := generateToken(&user)
 	if err != nil {
 		return nil, http.StatusUnauthorized, errors.New("failed to create token")
 	}
@@ -106,65 +106,12 @@ func GetUser(ctx context.Context) ([]*models.User, int, error) {
 	return users, http.StatusOK, nil
 }
 
-// admin
-func CreateAdmin(id string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").Where("id", "==", id).Limit(1)
-	doc, err := hasUser.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusBadRequest, errors.New("user not found")
+func generateToken(user *models.User) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"role":    user.Role,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
-
-	var user models.User
-	doc.DataTo(&user)
-
-	// อัปเดตข้อมูลของ user ใน Firestore
-	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"role": models.Admin,
-	}, firestore.MergeAll)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to update user role")
-	}
-
-	return http.StatusCreated, nil
-}
-
-func RemoveAdmin(id string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").Where("id", "==", id).Limit(1)
-	doc, err := hasUser.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusBadRequest, errors.New("user not found")
-	}
-
-	var user models.User
-	doc.DataTo(&user)
-
-	// อัปเดตข้อมูลของ user ใน Firestore
-	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"role": models.Player,
-	}, firestore.MergeAll)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to update user role")
-	}
-
-	return http.StatusCreated, nil
-}
-
-func RemoveUser(id string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").Where("id", "==", id).Limit(1)
-	doc, err := hasUser.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusBadRequest, errors.New("user not found")
-	}
-
-	var user models.User
-	doc.DataTo(&user)
-
-	_, err = doc.Ref.Set(ctx, map[string]interface{}{
-		"is_deleted": true,
-	}, firestore.MergeAll)
-	if err != nil {
-		return http.StatusBadRequest, errors.New("failed to delete")
-	}
-
-	return http.StatusOK, nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
 }
