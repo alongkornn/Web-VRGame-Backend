@@ -27,5 +27,5 @@ type Checkpoints struct {
 type Player struct {
 	Name  string `json:"name" firestore:"name"`
 	Score int    `json:"score" firestore:"score"`
-	Time  time.Time `json:"time" firestore:"time"`
+	Time  string `json:"time" firestore:"time"`
 }
