@@ -9,6 +9,7 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	checkpoint_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
+	"github.com/alongkornn/Web-VRGame-Backend/internal/user/dto"
 	"google.golang.org/api/iterator"
 )
 
@@ -137,4 +138,46 @@ func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
 		users = append(users, &user)
 	}
 	return users, http.StatusOK, nil
+}
+
+func UpdateUser(id string, updateUserDTO dto.UpdateUserDTO, ctx context.Context) (int, error) {
+	hasUser := config.DB.Collection("User").Where("is_deleted", "==", false).Where("role", "==", auth_models.Player).Where("id", "==", id).Limit(1)
+	userDoc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("user not found")
+	}
+
+	updateUser := make(map[string]interface{})
+
+	if updateUserDTO.FirstName != "" {
+		updateUser["firstname"] = updateUserDTO.FirstName
+	}
+
+	if updateUserDTO.LastName != "" {
+		updateUser["lastname"] = updateUserDTO.LastName
+	}
+
+	if updateUserDTO.Class != "" {
+		updateUser["class"] = updateUserDTO.Class
+	}
+
+	if updateUserDTO.Number != "" {
+		updateUser["number"] = updateUserDTO.Number
+	}
+
+	updateUser["updated_at"] = firestore.ServerTimestamp
+
+	var user auth_models.User
+	if err := userDoc.DataTo(&user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+
+
+	_, err = userDoc.Ref.Set(ctx, updateUser, firestore.MergeAll)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	
+	return http.StatusOK, nil
 }
