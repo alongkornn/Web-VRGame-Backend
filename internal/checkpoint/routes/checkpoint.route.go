@@ -9,4 +9,6 @@ func CheckpointRoute(g *echo.Group) {
 	checkpointGroup := g.Group("/checkpoint")
 
 	checkpointGroup.POST("/set/:checkpoint/:user", controllers.GetCurrentCheckpointToUser)
+	checkpointGroup.POST("/get", controllers.GetAllCheckpoint)
+	checkpointGroup.POST("/create", controllers.CreateCheckpoint)
 }

@@ -9,6 +9,7 @@ import (
 	authRoute "github.com/alongkornn/Web-VRGame-Backend/internal/auth/routes"
 	checkpointRoute "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/routes"
 	scoreRoute "github.com/alongkornn/Web-VRGame-Backend/internal/score/routes"
+	userRoute "github.com/alongkornn/Web-VRGame-Backend/internal/user/routes"
 	"github.com/labstack/echo/v4"
 )
 
@@ -29,6 +30,7 @@ func main() {
 	scoreRoute.ScoreRoute(globalGroup)
 	adminRoute.AdminRoute(globalGroup)
 	checkpointRoute.CheckpointRoute(globalGroup)
+	userRoute.UserRoute(globalGroup)
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))
