@@ -20,16 +20,18 @@ func CreateUserIfNotExists(client *firestore.Client, ctx context.Context) {
 
 	if len(docs) == 0 {
 		newUser := models.User{
-			ID:         uuid.New().String(),
-			FirstName:  "admin",
-			LastName:   "@admin",
-			Email:      "admin@axpi.com",
-			Password:   "adminaxpi",
-			Role:       models.Admin,
-			Status:     models.Approved,
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
-			Is_Deleted: false,
+			ID:                   uuid.New().String(),
+			FirstName:            "admin",
+			LastName:             "@admin",
+			Email:                "admin@axpi.com",
+			Password:             "adminaxpi",
+			Role:                 models.Admin,
+			Status:               models.Approved,
+			CurrentCheckpoint:    nil,
+			CompletedCheckpoints: nil,
+			CreatedAt:            time.Now(),
+			UpdatedAt:            time.Now(),
+			Is_Deleted:           false,
 		}
 
 		_, _, err := userCollection.Add(ctx, newUser)
