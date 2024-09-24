@@ -138,3 +138,73 @@ func UpdateUser(userId string, updateUserDTO dto.UpdateUserDTO, ctx context.Cont
 
 	return http.StatusOK, nil
 }
+
+func GetSumScore(userId string, ctx context.Context) (int, int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", auth_models.Player).
+		Where("status", "==", auth_models.Approved).
+		Limit(1)
+
+	userDoc, err := hasUser.Documents(ctx).GetAll()
+	if err != nil || len(userDoc) == 0 {
+		return 0, http.StatusBadRequest, errors.New("user not found")
+	}
+
+	var user auth_models.User
+	if err := userDoc[0].DataTo(&user); err != nil {
+		return 0, http.StatusInternalServerError, err
+	}
+
+	sumScore := user.Score
+
+	return sumScore, http.StatusOK, nil
+}
+
+func SetSumScore(userId string, ctx context.Context) (int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", auth_models.Player).
+		Where("status", "==", auth_models.Approved).
+		Where("id", "==", userId).
+		Limit(1)
+
+	userDocs, err := hasUser.Documents(ctx).GetAll()
+	if err != nil || len(userDocs) == 0 {
+		return http.StatusBadRequest, errors.New("user not found")
+	}
+
+	var user auth_models.User
+	if err := userDocs[0].DataTo(&user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	
+	// ตรวจสอบว่า CompletedCheckpoints มีข้อมูล
+	var sumScore int
+	if user.CompletedCheckpoints != nil {
+		for _, checkpoint := range user.CompletedCheckpoints {
+			sumScore += checkpoint.Score
+		}
+	}
+
+	// เพิ่มคะแนนจาก current_checkpoint หากมีค่า
+	if user.CurrentCheckpoint != nil {
+		sumScore += user.CurrentCheckpoint.Score
+	}
+
+	_, err = userDocs[0].Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "score",
+			Value: sumScore,
+		},
+		{
+			Path:  "updated_at",
+			Value: firestore.ServerTimestamp,
+		},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}

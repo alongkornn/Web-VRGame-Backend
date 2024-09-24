@@ -53,4 +53,18 @@ func UpdateUser(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to update data", nil)
 }
 
+func GetSumScore(ctx echo.Context) error {
+	userId := ctx.Param("userId")
 
+	sumScore, status, err := services.GetSumScore(userId, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to get score", sumScore)
+}
+
+func SetSumSocore(ctx echo.Context) error {
+	
+	return nil
+}
