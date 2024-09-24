@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// ลงทะเบียน
 func Register(ctx echo.Context) error {
 	var registerDTO dto.RegisterDTO
 	if err := ctx.Bind(&registerDTO); err != nil {
@@ -22,7 +23,7 @@ func Register(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Created User Successfully", nil)
 }
 
-
+// เข้าสู้ระบบ
 func Login(ctx echo.Context) error {
 	var loginDTO dto.LoginDTO
 	if err := ctx.Bind(&loginDTO); err != nil {

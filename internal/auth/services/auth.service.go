@@ -15,9 +15,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// user
-
+// ลงทะเบียน
 func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("email", "==", registerDTO.Email).
+		Limit(1)
+
+	userDoc, err := hasUser.Documents(ctx).GetAll()
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("error checking user existence")
+	}
+
+	if len(userDoc) > 0 {
+		return http.StatusConflict, errors.New("email already registered")
+	}
+
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(registerDTO.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return http.StatusBadRequest, errors.New("hash password is error")
@@ -47,18 +59,21 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 	return http.StatusOK, nil
 }
 
+// เข้าสู่ระบบ
 func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int, error) {
 	hasUser := config.DB.Collection("User").Where("email", "==", email).Limit(1)
-	doc, err := hasUser.Documents(ctx).Next()
-	if err != nil {
+
+	userDoc, err := hasUser.Documents(ctx).GetAll()
+	if err != nil || len(userDoc) == 0{
 		return nil, http.StatusBadRequest, errors.New("user not found")
 	}
 
 	var user models.User
-	doc.DataTo(&user)
+	if err := userDoc[0].DataTo(&user); err != nil {
+		return nil, http.StatusInternalServerError, errors.New("error retrieving user data")
+	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return nil, http.StatusUnauthorized, errors.New("invalid password")
 	}
 
@@ -74,6 +89,7 @@ func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int
 	return &data, http.StatusOK, nil
 }
 
+// สร้าง token ขึ้นมา
 func generateToken(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
