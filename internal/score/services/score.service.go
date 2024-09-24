@@ -95,13 +95,13 @@ func SetScore(userId string, score int, ctx context.Context) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	sumScore := user.Score + score
+	sumScore := user.CurrentCheckpoint.Score + score
 	maxScore := user.CurrentCheckpoint.MaxScore
 
 	if sumScore <= maxScore {
 		_, err = userDoc.Ref.Update(ctx, []firestore.Update{
 			{
-				Path:  "score",
+				Path:  "current_checkpoint.score",
 				Value: sumScore,
 			},
 			{
