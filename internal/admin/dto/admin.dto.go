@@ -1,11 +1,14 @@
 package dto
 
+import "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+
 type Approved struct {
-	Status string `json:"status" firestore:"status"`
+	Status models.Status `json:"status" firestore:"status"`
 }
 
 type RoleDTO struct {
-	Role string `json:"role" firestore:"role"`
+	UserId string      `json:"userId" firestore:"userId"`
+	Role   models.Role `json:"role" firestore:"role"`
 }
 
 type UpdateDTO struct {
@@ -16,6 +19,6 @@ type UpdateDTO struct {
 }
 
 type UpdatePasswordDTO struct {
-	Password string `json:"password"`
+	Password    string `json:"password"`
 	NewPassword string `json:"new_password"`
 }

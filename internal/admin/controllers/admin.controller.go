@@ -9,15 +9,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// approve user register
-func ApprovedRegister(ctx echo.Context) error {
-	id := ctx.Param("id")
+// ผู้ดูแลระบบอนุมัติการลงทะเบียนของผู้เล่น
+func AddminApprovedUserRegister(ctx echo.Context) error {
+	userId := ctx.Param("userId")
 	var approveDTO dto.Approved
 	if err := ctx.Bind(&approveDTO); err != nil {
 		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
 	}
 
-	status, err := services.ApprovedRegister(id, approveDTO.Status,  ctx.Request().Context())
+	status, err := services.AddminApprovedUserRegister(userId, approveDTO.Status, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
@@ -25,11 +25,11 @@ func ApprovedRegister(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to approved", nil)
 }
 
-// remove user
-func RemoveUser(ctx echo.Context) error {
-	id := ctx.Param("id")
+// ลบผู้เล่นออก
+func AdminRemoveUser(ctx echo.Context) error {
+	userId := ctx.Param("userId")
 
-	status, err := services.RemoveUser(id, ctx.Request().Context())
+	status, err := services.AdminRemoveUser(userId, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
@@ -37,11 +37,11 @@ func RemoveUser(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to Delete", nil)
 }
 
-// remove admin
+// ลบผู้ดูแลระบบออก
 func RemoveAdmin(ctx echo.Context) error {
-	id := ctx.Param("id")
+	adminId := ctx.Param("adminId")
 
-	status, err := services.RemoveAdmin(id, ctx.Request().Context())
+	status, err := services.RemoveAdmin(adminId, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
@@ -49,6 +49,7 @@ func RemoveAdmin(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to Delete", nil)
 }
 
+// แสดงแอดมินทั้งหมด
 func GetAllAdmin(ctx echo.Context) error {
 	users, status, err := services.GetAllAdmin(ctx.Request().Context())
 	if err != nil {
@@ -58,10 +59,11 @@ func GetAllAdmin(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfuly to get admin", users)
 }
 
-func GetAdminByID(ctx echo.Context) error {
-	id := ctx.Param("id")
+// แสดงผู้ดูแลระบบโดยเข้าถึงผ่านไอดีของผู้ดูแลระบบ
+func GetAdminById(ctx echo.Context) error {
+	adminId := ctx.Param("adminId")
 
-	user, status, err := services.GetAdminByID(id, ctx.Request().Context())
+	user, status, err := services.GetAdminById(adminId, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
@@ -69,14 +71,13 @@ func GetAdminByID(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to Get user", user)
 }
 
-// admin
+// สร้างผู้ดูแลระบบ
 func CreateAdmin(ctx echo.Context) error {
-	id := ctx.Param("id")
 	var roleDTO dto.RoleDTO
 	if err := ctx.Bind(&roleDTO); err != nil {
 		return utils.SendError(ctx, http.StatusBadRequest, "Invalid", nil)
-	} 
-	status, err := services.CreateAdmin(id, roleDTO.Role, ctx.Request().Context())
+	}
+	status, err := services.CreateAdmin(roleDTO.UserId, roleDTO.Role, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
@@ -84,14 +85,15 @@ func CreateAdmin(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to Created", nil)
 }
 
+// แก้ไขข้อมูลผู้ดูแลระบบ
 func UpdateDataAdmin(ctx echo.Context) error {
-	id := ctx.Param("id")
+	adminId := ctx.Param("adminId")
 	var updateDTO dto.UpdateDTO
 	if err := ctx.Bind(&updateDTO); err != nil {
 		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
 	}
 
-	status, err := services.UpdateDataAdmin(id, updateDTO, ctx.Request().Context())
+	status, err := services.UpdateDataAdmin(adminId, updateDTO, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
@@ -99,15 +101,16 @@ func UpdateDataAdmin(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to update data", nil)
 }
 
+// แก้ไขรหัสผ่านของผู้ดูแลระบบ
 func UpdatePasswordAdmin(ctx echo.Context) error {
-	id := ctx.Param("id")
+	adminId := ctx.Param("adminId")
 
 	var updatePasswordDTO dto.UpdatePasswordDTO
 	if err := ctx.Bind(&updatePasswordDTO); err != nil {
 		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
 	}
 
-	status, err := services.UpdatePasswordAdmin(id, updatePasswordDTO.Password, updatePasswordDTO.NewPassword, ctx.Request().Context())
+	status, err := services.UpdatePasswordAdmin(adminId, updatePasswordDTO.Password, updatePasswordDTO.NewPassword, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}

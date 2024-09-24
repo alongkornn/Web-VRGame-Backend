@@ -17,6 +17,7 @@ const (
 const (
 	Pending  Status = "pending"
 	Approved Status = "approved"
+	Deleted  Status = "deleted"
 )
 
 type User struct {

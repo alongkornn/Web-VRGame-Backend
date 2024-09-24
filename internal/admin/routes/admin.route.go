@@ -8,16 +8,24 @@ import (
 func AdminRoute(g *echo.Group) {
 	adminGroup := g.Group("/admin")
 
-	adminGroup.POST("/create/:id", controllers.CreateAdmin)
-	adminGroup.POST("/get/:id", controllers.GetAdminByID)
+	// เพิ่มผู้ดูแลระบบ
+	adminGroup.POST("/create", controllers.CreateAdmin)
+	// แสดงผู้ดูแลระบบแค่คนเดียว
+	adminGroup.POST("/get/:adminId", controllers.GetAdminById)
+	// แสดงผูู้ดูแลระบบทั้งหมด
 	adminGroup.POST("/get", controllers.GetAllAdmin)
-	adminGroup.PUT("/approve/:id", controllers.ApprovedRegister)
-	adminGroup.DELETE("/delete/user/:id", controllers.RemoveUser)
-	adminGroup.DELETE("/delete/admin/:id", controllers.RemoveAdmin)
-	adminGroup.PUT("/update/admin/:id", controllers.UpdateDataAdmin)
-	adminGroup.PUT("/updatepassword/admin/:id", controllers.UpdatePasswordAdmin)
+	// ผู้ดูแลระบบอนุมัติการลงทะเบียนของผู้เล่น
+	adminGroup.PUT("/approve/:userId", controllers.AddminApprovedUserRegister)
+	// ผู้ดูแลระบบลบผู้เล่น
+	adminGroup.DELETE("/delete/user/:userId", controllers.AdminRemoveUser)
+	// ลบผู้ดูแลระบบออก
+	adminGroup.DELETE("/delete/admin/:adminId", controllers.RemoveAdmin)
+	// แก้ไขข้อมูลผู้ดูแลระบบ
+	adminGroup.PUT("/update/admin/:adminId", controllers.UpdateDataAdmin)
+	// แก้ไขรหัสผ่านผู้ดูแลระบบ
+	adminGroup.PUT("/updatepassword/admin/:Id", controllers.UpdatePasswordAdmin)
 
 	// protectedGroup := g.Group("")
 	// adminGroup := protectedGroup.Group("/admin")
-    // adminGroup.Use(middleware.RoleBasedMiddleware("admin"))
+	// adminGroup.Use(middleware.RoleBasedMiddleware("admin"))
 }
