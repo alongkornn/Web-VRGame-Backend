@@ -15,6 +15,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+// แสดงด่านปัจจุบันของผู้เล่น(โดยจะเข้าถึงผ่านไอดีของผู้เล่น)
 func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkpoint_models.Checkpoints, int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -35,6 +36,7 @@ func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkp
 	return user.CurrentCheckpoint, http.StatusOK, nil
 }
 
+// แสดงด่านทั้งหมดทุกหมวดหมู่
 func GetAllCheckpoint(ctx context.Context) ([]*checkpoint_models.Checkpoints, int, error) {
 	iter := config.DB.Collection("Checkpoint").
 		Where("is_deleted", "==", false).
@@ -65,6 +67,7 @@ func GetAllCheckpoint(ctx context.Context) ([]*checkpoint_models.Checkpoints, in
 	return checkpoints, http.StatusOK, nil
 }
 
+// สร้างด่านใหม่
 func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Context) (int, error) {
 	checkpoint := checkpoint_models.Checkpoints{
 		ID:         uuid.New().String(),
@@ -86,6 +89,7 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 	return http.StatusOK, nil
 }
 
+// บันทึกด่านปัจจุบันลงในด่านที่เล่นผ่านแล้วโดยจะตรวจสอบว่าคะแนนผ่านเกณฑ์หรือยัง
 func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -104,7 +108,7 @@ func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	if user.Score >= user.CurrentCheckpoint.PassScore && user.Score <= user.CurrentCheckpoint.MaxScore {
+	if user.CurrentCheckpoint.Score >= user.CurrentCheckpoint.PassScore && user.Score <= user.CurrentCheckpoint.MaxScore {
 		_, err := userDoc.Ref.Update(ctx, []firestore.Update{
 			{
 				Path:  "completed_checkpoints",
@@ -118,10 +122,6 @@ func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
 				Path:  "current_checkpoint",
 				Value: nil,
 			},
-			{
-				Path:  "score",
-				Value: 0,
-			},
 		})
 		if err != nil {
 			return http.StatusInternalServerError, err
@@ -130,6 +130,7 @@ func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
 	return http.StatusOK, nil
 }
 
+// แสดงด่านที่ผู้เล่นเล่นผ่าน(โดยจะเข้าถึงผ่านไอดีของผู้เล่น)
 func GetCompleteCheckpointByUserId(userId string, ctx context.Context) ([]checkpoint_models.Checkpoints, int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -155,6 +156,8 @@ func GetCompleteCheckpointByUserId(userId string, ctx context.Context) ([]checkp
 
 	return checkpoints, http.StatusOK, nil
 }
+
+// แสดงทุกด่านตามหมวดหมู่
 func GetCheckpointWithCategory(category string, ctx context.Context) ([]*checkpoint_models.Checkpoints, int, error) {
 	iter := config.DB.Collection("Checkpoint").
 		Where("is_deleted", "==", false).
