@@ -22,5 +22,3 @@ type Checkpoints struct {
 	UpdatedAt  time.Time `json:"updated_at" firestore:"updated_at"`
 	Is_Deleted bool      `json:"is_deleted" firestore:"is_deleted"`
 }
-
-

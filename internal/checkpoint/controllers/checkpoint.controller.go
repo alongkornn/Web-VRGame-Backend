@@ -43,6 +43,7 @@ func CreateCheckpoint(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to created", nil)
 }
 
+
 func SaveCheckpointToComplete(ctx echo.Context) error {
 	id := ctx.Param("userId")
 
@@ -57,9 +58,22 @@ func SaveCheckpointToComplete(ctx echo.Context) error {
 func GetCompleteCheckpointByUserId(ctx echo.Context) error {
 	id := ctx.Param("userId")
 	completeCheckpoints, status, err := services.GetCompleteCheckpointByUserId(id, ctx.Request().Context())
+  if err != nil {
+    return utils.SendError(ctx, status, err.Error(), nil)
+  }
+  return utils.SendSuccess(ctx, status, "Successfully to get checkpoinComplete", completeCheckpoints)
+}
+
+func GetCheckpointWithCategory(ctx echo.Context) error {
+	var categoryDTO dto.GetCheckpointWithCategoryDTO
+	if err := ctx.Bind(&categoryDTO); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
+	}
+
+	checkpoints, status, err := services.GetCheckpointWithCategory(categoryDTO.Category, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 
-	return utils.SendSuccess(ctx, status, "Successfully to get complete checkpoint", completeCheckpoints)
+	return utils.SendSuccess(ctx, status, "Successfully to get checkpoin with catery", checkpoints)
 }

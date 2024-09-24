@@ -13,4 +13,5 @@ func CheckpointRoute(g *echo.Group) {
 	checkpointGroup.POST("/create", controllers.CreateCheckpoint)
 	checkpointGroup.POST("/save/checkpoint/complete/:userId", controllers.SaveCheckpointToComplete)
 	checkpointGroup.POST("/get/checkpoint/complete/:userId", controllers.GetCompleteCheckpointByUserId)
+	checkpointGroup.POST("/get/category", controllers.GetCheckpointWithCategory)
 }

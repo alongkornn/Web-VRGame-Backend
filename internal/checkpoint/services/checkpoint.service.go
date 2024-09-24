@@ -75,6 +75,7 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 		Is_Deleted: false,
+
 	}
 
 	_, _, err := config.DB.Collection("Checkpoint").Add(ctx, checkpoint)
@@ -152,5 +153,34 @@ func GetCompleteCheckpointByUserId(userId string, ctx context.Context) ([]checkp
 		checkpoints = append(checkpoints, *checkpoint)
 	}
 
+	return checkpoints, http.StatusOK, nil
+}
+func GetCheckpointWithCategory(category string, ctx context.Context) ([]*checkpoint_models.Checkpoints, int, error) {
+	iter := config.DB.Collection("Checkpoint").
+		Where("is_deleted", "==", false).
+		Where("category", "==", category).
+		Documents(ctx)
+	defer iter.Stop()
+
+	var checkpoints []*checkpoint_models.Checkpoints
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			if len(checkpoints) == 0 {
+				return nil, http.StatusNotFound, errors.New("checkpoint is empty")
+			}
+			break
+		}
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		var checkpoint checkpoint_models.Checkpoints
+		if err := doc.DataTo(&checkpoint); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		checkpoints = append(checkpoints, &checkpoint)
+	}
 	return checkpoints, http.StatusOK, nil
 }
