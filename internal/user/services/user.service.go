@@ -12,6 +12,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+// แสดงผู้เล่นแค่คนเดียว
 func GetUserByID(userId string, ctx context.Context) (*auth_models.User, int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -33,6 +34,7 @@ func GetUserByID(userId string, ctx context.Context) (*auth_models.User, int, er
 	return user, http.StatusOK, nil
 }
 
+// แสดงผู้เล่นทั้งหมด
 func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -63,6 +65,7 @@ func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
 	return users, http.StatusOK, nil
 }
 
+// แสดงผู้เล่นที่ยังไม่ได้รับการอนุมัติ
 func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -93,6 +96,7 @@ func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
 	return users, http.StatusOK, nil
 }
 
+// แก้ไขข้อมูลผู้เล่น
 func UpdateUser(userId string, updateUserDTO dto.UpdateUserDTO, ctx context.Context) (int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -139,6 +143,7 @@ func UpdateUser(userId string, updateUserDTO dto.UpdateUserDTO, ctx context.Cont
 	return http.StatusOK, nil
 }
 
+// แสดงคะแนนรวมทั้งหมด
 func GetSumScore(userId string, ctx context.Context) (int, int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
@@ -161,6 +166,7 @@ func GetSumScore(userId string, ctx context.Context) (int, int, error) {
 	return sumScore, http.StatusOK, nil
 }
 
+// รวมคะแนนทั้งหมดที่ผู้เล่นทำได้
 func SetSumScore(userId string, ctx context.Context) (int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
