@@ -8,10 +8,8 @@ import (
 func UserRoute(e *echo.Group) {
 	userGroup := e.Group("/user")
 
-	userGroup.POST("/get/:id", controllers.GetUserByID)
-	userGroup.POST("/add/checkpoint/:checkpointID/:userID", controllers.AddPlayerInCheckpoint)
-	userGroup.POST("/get", controllers.GetAllUser)
-	userGroup.POST("/get/pending", controllers.GetUserPending)
-	userGroup.PUT("/update/:id", controllers.UpdateUser)
-
+	userGroup.POST("/get/user/:userId", controllers.GetUserByID)
+	userGroup.POST("/get/user", controllers.GetAllUser)
+	userGroup.POST("/get/user/pending", controllers.GetUserPending)
+	userGroup.PUT("/update/user/:userId", controllers.UpdateUser)
 }

@@ -9,17 +9,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// เพิ่มด่านปัจจุบันให้กับผู้เล่น
-func GetCurrentCheckpointToUser(ctx echo.Context) error {
-	checkpointID := ctx.Param("checkpoint")
+func GetCurrentCheckpointFromUser(ctx echo.Context) error {
 	userID := ctx.Param("user")
 
-	status, err := services.GetCurrentCheckpointToUser(checkpointID, userID, ctx.Request().Context())
+	checkpoint, status, err := services.GetCurrentCheckpointFromUserId(userID, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 
-	return utils.SendSuccess(ctx, status, "Add checkpoint success", nil)
+	return utils.SendSuccess(ctx, status, "Add checkpoint success", checkpoint)
 }
 
 func GetAllCheckpoint(ctx echo.Context) error {
@@ -43,6 +41,27 @@ func CreateCheckpoint(ctx echo.Context) error {
 	}
 
 	return utils.SendSuccess(ctx, status, "Successfully to created", nil)
+}
+
+
+func SaveCheckpointToComplete(ctx echo.Context) error {
+	id := ctx.Param("userId")
+
+	status, err := services.SaveCheckpointToComplete(id, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to save", nil)
+}
+
+func GetCompleteCheckpointByUserId(ctx echo.Context) error {
+	id := ctx.Param("userId")
+	completeCheckpoints, status, err := services.GetCompleteCheckpointByUserId(id, ctx.Request().Context())
+  if err != nil {
+    return utils.SendError(ctx, status, err.Error(), nil)
+  }
+  return utils.SendSuccess(ctx, status, "Successfully to get checkpoinComplete", completeCheckpoints)
 }
 
 func GetCheckpointWithCategory(ctx echo.Context) error {

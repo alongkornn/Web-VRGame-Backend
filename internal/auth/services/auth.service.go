@@ -13,7 +13,6 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/api/iterator"
 )
 
 // user
@@ -31,7 +30,6 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 		Password:   string(hashPassword),
 		Class:      registerDTO.Class,
 		Number:     registerDTO.Number,
-		Score:      0,
 		Level:      1,
 		Role:       models.Player,
 		Status:     models.Pending,
@@ -74,36 +72,6 @@ func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int
 	}
 
 	return &data, http.StatusOK, nil
-}
-
-func GetUser(ctx context.Context) ([]*models.User, int, error) {
-	iter := config.DB.Collection("User").Where("is_deleted", "==", false).Documents(ctx)
-	defer iter.Stop()
-
-	var users []*models.User
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, http.StatusInternalServerError, errors.New("somethig went wrong")
-		}
-
-		var user models.User
-		err = doc.DataTo(&user)
-		if err != nil {
-			return nil, http.StatusInternalServerError, errors.New("somethig went wrong")
-		}
-
-		users = append(users, &user)
-	}
-
-	if len(users) <= 0 {
-		return nil, http.StatusOK, errors.New("users is empty")
-	}
-
-	return users, http.StatusOK, nil
 }
 
 func generateToken(user *models.User) (string, error) {

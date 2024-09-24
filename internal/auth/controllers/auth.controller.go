@@ -9,8 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// user
-
 func Register(ctx echo.Context) error {
 	var registerDTO dto.RegisterDTO
 	if err := ctx.Bind(&registerDTO); err != nil {
@@ -36,14 +34,5 @@ func Login(ctx echo.Context) error {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 	return utils.SendSuccess(ctx, status, "Successfully to Login", data)
-}
-
-func GetUser(ctx echo.Context) error {
-	users, status, err := services.GetUser(ctx.Request().Context())
-	if err != nil {
-		return utils.SendError(ctx, status, err.Error(), nil)
-	}
-
-	return utils.SendSuccess(ctx, status, "Successfully to Fetch User", users)
 }
 

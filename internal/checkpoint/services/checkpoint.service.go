@@ -15,21 +15,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func GetCurrentCheckpointToUser(checkpointId, userId string, ctx context.Context) (int, error) {
-	checkpointID := config.DB.Collection("Checkpoint").
-		Where("is_deleted", "==", false).
-		Where("id", "==", checkpointId).
-		Limit(1)
-
-	checkpointDoc, err := checkpointID.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusNotFound, errors.New("checkpoint not found")
-	}
-	var checkpoint checkpoint_models.Checkpoints
-	if err = checkpointDoc.DataTo(&checkpoint); err != nil {
-		return http.StatusInternalServerError, err
-	}
-
+func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkpoint_models.Checkpoints, int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
 		Where("role", "==", auth_models.Player).
@@ -38,34 +24,27 @@ func GetCurrentCheckpointToUser(checkpointId, userId string, ctx context.Context
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
-		return http.StatusNotFound, errors.New("checkpoint not found")
+		return nil, http.StatusNotFound, errors.New("user not found")
 	}
+	
 	var user auth_models.User
 	if err := userDoc.DataTo(&user); err != nil {
-		return http.StatusInternalServerError, err
+		return nil, http.StatusInternalServerError, err
 	}
 
-	_, err = userDoc.Ref.Set(ctx, map[string]interface{}{
-		"current_checkpoint": checkpoint,
-		"updated_at":         firestore.ServerTimestamp,
-	}, firestore.MergeAll)
-	if err != nil {
-		return http.StatusInternalServerError, err
-
-	}
-
-	return http.StatusOK, nil
+	return user.CurrentCheckpoint, http.StatusOK, nil
 }
 
 func GetAllCheckpoint(ctx context.Context) ([]*checkpoint_models.Checkpoints, int, error) {
 	iter := config.DB.Collection("Checkpoint").
 		Where("is_deleted", "==", false).
 		Documents(ctx)
+
 	defer iter.Stop()
 
 	var checkpoints []*checkpoint_models.Checkpoints
 	for {
-		doc, err := iter.Next()
+		checkpointDoc, err := iter.Next()
 		if err == iterator.Done {
 			if len(checkpoints) == 0 {
 				return nil, http.StatusNotFound, errors.New("checkpoint is empty")
@@ -77,7 +56,7 @@ func GetAllCheckpoint(ctx context.Context) ([]*checkpoint_models.Checkpoints, in
 		}
 
 		var checkpoint checkpoint_models.Checkpoints
-		if err := doc.DataTo(&checkpoint); err != nil {
+		if err := checkpointDoc.DataTo(&checkpoint); err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
 
@@ -88,15 +67,15 @@ func GetAllCheckpoint(ctx context.Context) ([]*checkpoint_models.Checkpoints, in
 
 func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Context) (int, error) {
 	checkpoint := checkpoint_models.Checkpoints{
-		ID:          uuid.New().String(),
-		Name:        checkpointDTO.Name,
-		MaxScore:    checkpointDTO.MaxScore,
-		PassScore:   checkpointDTO.PassScore,
-		PlayerScore: nil,
-		Category:    checkpointDTO.Category,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Is_Deleted:  false,
+		ID:         uuid.New().String(),
+		Name:       checkpointDTO.Name,
+		MaxScore:   checkpointDTO.MaxScore,
+		PassScore:  checkpointDTO.PassScore,
+		Category:   checkpointDTO.Category,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Is_Deleted: false,
+
 	}
 
 	_, _, err := config.DB.Collection("Checkpoint").Add(ctx, checkpoint)
@@ -107,6 +86,75 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 	return http.StatusOK, nil
 }
 
+func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", auth_models.Player).
+		Where("status", "==", auth_models.Approved).
+		Where("id", "==", userID).
+		Limit(1)
+
+	userDoc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("user not found")
+	}
+
+	var user auth_models.User
+	if err := userDoc.DataTo(&user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if user.Score >= user.CurrentCheckpoint.PassScore && user.Score <= user.CurrentCheckpoint.MaxScore {
+		_, err := userDoc.Ref.Update(ctx, []firestore.Update{
+			{
+				Path:  "completed_checkpoints",
+				Value: user.CurrentCheckpoint,
+			},
+			{
+				Path:  "updated_at",
+				Value: firestore.ServerTimestamp,
+			},
+			{
+				Path:  "current_checkpoint",
+				Value: nil,
+			},
+			{
+				Path:  "score",
+				Value: 0,
+			},
+		})
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
+	}
+	return http.StatusOK, nil
+}
+
+func GetCompleteCheckpointByUserId(userId string, ctx context.Context) ([]checkpoint_models.Checkpoints, int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", auth_models.Player).
+		Where("status", "==", auth_models.Approved).
+		Where("id", "==", userId).
+		Limit(1)
+
+	userDoc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return nil, http.StatusNotFound, errors.New("user not found")
+	}
+
+	var user auth_models.User
+	if err := userDoc.DataTo(&user); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	checkpoints := make([]checkpoint_models.Checkpoints, 0, len(user.CompletedCheckpoints))
+	for _, checkpoint := range user.CompletedCheckpoints {
+		checkpoints = append(checkpoints, *checkpoint)
+	}
+
+	return checkpoints, http.StatusOK, nil
+}
 func GetCheckpointWithCategory(category string, ctx context.Context) ([]*checkpoint_models.Checkpoints, int, error) {
 	iter := config.DB.Collection("Checkpoint").
 		Where("is_deleted", "==", false).
