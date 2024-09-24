@@ -1,4 +1,4 @@
-package user_utils
+package admin_utils
 
 import (
 	"cloud.google.com/go/firestore"
@@ -6,12 +6,12 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 )
 
-func HasUser(userId string) (firestore.Query) {
-	hasUser := config.DB.Collection("User").
+func HasAdmin(adminId string) (firestore.Query) {
+	hasAdmin := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("role", "==", models.Player).
+		Where("role", "==", models.Admin).
 		Where("status", "==", models.Approved).
-		Where("id", "==", userId).
+		Where("id", "==", adminId).
 		Limit(1)
-	return hasUser
+	return hasAdmin
 }

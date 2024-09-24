@@ -15,7 +15,7 @@ import (
 
 // แสดงผู้เล่นแค่คนเดียว
 func GetUserByID(userId string, ctx context.Context) (*auth_models.User, int, error) {
-	hasUser := utils.HasUser(userId)
+	hasUser := user_utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -94,7 +94,7 @@ func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
 
 // แก้ไขข้อมูลผู้เล่น
 func UpdateUser(userId string, updateUserDTO dto.UpdateUserDTO, ctx context.Context) (int, error) {
-	hasUser := utils.HasUser(userId)
+	hasUser := user_utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -136,7 +136,7 @@ func UpdateUser(userId string, updateUserDTO dto.UpdateUserDTO, ctx context.Cont
 
 // แสดงคะแนนรวมทั้งหมด
 func GetSumScore(userId string, ctx context.Context) (int, int, error) {
-	hasUser := utils.HasUser(userId)
+	hasUser := user_utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {
@@ -155,7 +155,7 @@ func GetSumScore(userId string, ctx context.Context) (int, int, error) {
 
 // รวมคะแนนทั้งหมดที่ผู้เล่นทำได้
 func SetSumScore(userId string, ctx context.Context) (int, error) {
-	hasUser := utils.HasUser(userId)
+	hasUser := user_utils.HasUser(userId)
 
 	userDocs, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDocs) == 0 {
