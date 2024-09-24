@@ -117,3 +117,14 @@ func UpdatePasswordAdmin(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to change password", nil)
 }
+
+func ShowScoreWiteStrength(ctx echo.Context) error {
+	userId := ctx.Param("userId")
+
+	isStrong, status, err := services.ShowScoreWiteStrength(userId, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to fetch score", isStrong)
+}

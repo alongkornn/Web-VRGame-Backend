@@ -30,4 +30,3 @@ func InitFirebase() {
 
 	log.Println("Successfully connectd to firestore")
 }
-

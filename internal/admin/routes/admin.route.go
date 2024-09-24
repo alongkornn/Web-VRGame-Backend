@@ -23,7 +23,9 @@ func AdminRoute(g *echo.Group) {
 	// แก้ไขข้อมูลผู้ดูแลระบบ
 	adminGroup.PUT("/update/admin/:adminId", controllers.UpdateDataAdmin)
 	// แก้ไขรหัสผ่านผู้ดูแลระบบ
-	adminGroup.PUT("/updatepassword/admin/:Id", controllers.UpdatePasswordAdmin)
+	adminGroup.PUT("/updatepassword/admin/:adminId", controllers.UpdatePasswordAdmin)
+	// แสดงจุดเด่นของผู้เล่นว่าเด่นในด้านไหน
+	adminGroup.PUT("/get/score/strong/:userId", controllers.ShowScoreWiteStrength)
 
 	// protectedGroup := g.Group("")
 	// adminGroup := protectedGroup.Group("/admin")
