@@ -9,17 +9,13 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/user/dto"
+	"github.com/alongkornn/Web-VRGame-Backend/internal/user/utils"
 	"google.golang.org/api/iterator"
 )
 
 // แสดงผู้เล่นแค่คนเดียว
 func GetUserByID(userId string, ctx context.Context) (*auth_models.User, int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("status", "==", auth_models.Approved).
-		Where("role", "==", auth_models.Player).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -98,12 +94,7 @@ func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
 
 // แก้ไขข้อมูลผู้เล่น
 func UpdateUser(userId string, updateUserDTO dto.UpdateUserDTO, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -145,11 +136,7 @@ func UpdateUser(userId string, updateUserDTO dto.UpdateUserDTO, ctx context.Cont
 
 // แสดงคะแนนรวมทั้งหมด
 func GetSumScore(userId string, ctx context.Context) (int, int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {
@@ -168,12 +155,7 @@ func GetSumScore(userId string, ctx context.Context) (int, int, error) {
 
 // รวมคะแนนทั้งหมดที่ผู้เล่นทำได้
 func SetSumScore(userId string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDocs, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDocs) == 0 {
@@ -184,7 +166,7 @@ func SetSumScore(userId string, ctx context.Context) (int, error) {
 	if err := userDocs[0].DataTo(&user); err != nil {
 		return http.StatusInternalServerError, err
 	}
-	
+
 	// ตรวจสอบว่า CompletedCheckpoints มีข้อมูล
 	var sumScore int
 	if user.CompletedCheckpoints != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/internal/admin/dto"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	checkpoint_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
+	"github.com/alongkornn/Web-VRGame-Backend/internal/user/utils"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/iterator"
 )
@@ -51,12 +52,7 @@ func AddminApprovedUserRegister(userId string, approved auth_models.Status, ctx 
 
 // ผู้ดูแลระบบลบผู้เล่นออก
 func AdminRemoveUser(userId string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -185,12 +181,7 @@ func GetAdminById(adminId string, ctx context.Context) (*auth_models.User, int, 
 
 // เพิ่มผู้ดูแลระบบ
 func CreateAdmin(userId string, role auth_models.Role, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userdoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -320,12 +311,7 @@ func UpdatePasswordAdmin(adminId, password, newPassword string, ctx context.Cont
 
 // แสดงจุดเด่นของผู้เล่น
 func ShowScoreWiteStrength(userId string, ctx context.Context) ([]*checkpoint_models.Category, int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {
@@ -352,12 +338,7 @@ func ShowScoreWiteStrength(userId string, ctx context.Context) ([]*checkpoint_mo
 
 // แสดงจุดด้อยของผู้เล่น
 func ShowScoreWiteWeaknesses(userId string, ctx context.Context) ([]*checkpoint_models.Category, int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {
