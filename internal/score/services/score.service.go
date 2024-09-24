@@ -38,7 +38,7 @@ func GetScoreByUserId(userId string, ctx context.Context) (*score_models.Score, 
 	return &score, http.StatusOK, nil
 }
 
-func GetAllScore(ctx context.Context) ([]*score_models.Score, int, error) {
+func GetAllScoreByCheckpointId(checkpointId string, ctx context.Context) ([]*score_models.Score, int, error) {
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
 		Where("role", "==", auth_models.Player).
@@ -65,13 +65,18 @@ func GetAllScore(ctx context.Context) ([]*score_models.Score, int, error) {
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
-
-		score := score_models.Score{
-			Name:  user.FirstName,
-			Score: user.Score,
+		
+		if user.CurrentCheckpoint.ID == checkpointId {
+			score := score_models.Score{
+				CheckpointName: user.CurrentCheckpoint.Name,
+				Category: user.CurrentCheckpoint.Category,
+				Name:  user.FirstName,
+				Score: user.CurrentCheckpoint.Score,
+			}
+			users_score = append(users_score, &score)
+		} else {
+			return nil, http.StatusBadRequest, errors.New("checkpoin id not found")
 		}
-
-		users_score = append(users_score, &score)
 
 	}
 	return users_score, http.StatusOK, nil

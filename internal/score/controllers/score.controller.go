@@ -19,8 +19,9 @@ func GetScoreByUserId(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to get score", score)
 }
 
-func GetAllScore(ctx echo.Context) error {
-	users_score, status, err := services.GetAllScore(ctx.Request().Context())
+func GetAllScoreByCheckpointId(ctx echo.Context) error {
+	checkpointId := ctx.Param("checkpointId")
+	users_score, status, err := services.GetAllScoreByCheckpointId(checkpointId, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
