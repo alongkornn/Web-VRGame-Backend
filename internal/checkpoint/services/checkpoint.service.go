@@ -27,7 +27,7 @@ func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkp
 	if err != nil {
 		return nil, http.StatusNotFound, errors.New("user not found")
 	}
-	
+
 	var user auth_models.User
 	if err := userDoc.DataTo(&user); err != nil {
 		return nil, http.StatusInternalServerError, err
@@ -78,7 +78,6 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 		Is_Deleted: false,
-
 	}
 
 	_, _, err := config.DB.Collection("Checkpoint").Add(ctx, checkpoint)
@@ -186,4 +185,39 @@ func GetCheckpointWithCategory(category string, ctx context.Context) ([]*checkpo
 		checkpoints = append(checkpoints, &checkpoint)
 	}
 	return checkpoints, http.StatusOK, nil
+}
+
+// เพิ่มเวลาในด่านปัจจุบัน
+func SetTime(userId string, time time.Duration, ctx context.Context) (int, error) {
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", auth_models.Player).
+		Where("status", "==", auth_models.Approved).
+		Limit(1)
+
+	userDoc, err := hasUser.Documents(ctx).GetAll()
+	if err != nil || len(userDoc) == 0 {
+		return http.StatusBadRequest, errors.New("user not found")
+	}
+
+	var user auth_models.User
+	if err := userDoc[0].DataTo(&user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	_, err = userDoc[0].Ref.Update(ctx, []firestore.Update{
+		{
+			Path: "user.current_checkpoint.time",
+			Value: time,
+		},
+		{
+			Path: "updated_at",
+			Value: firestore.ServerTimestamp,
+		},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
 }

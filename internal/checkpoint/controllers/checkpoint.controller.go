@@ -82,3 +82,18 @@ func GetCheckpointWithCategory(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to get checkpoin with catery", checkpoints)
 }
+
+func SetTime(ctx echo.Context) error {
+	userId := ctx.Param("userId")
+	var time dto.SetTimeDTO
+	if err := ctx.Bind(&time); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
+	}
+
+	status, err := services.SetTime(userId, time.Time, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to set time", nil)
+}

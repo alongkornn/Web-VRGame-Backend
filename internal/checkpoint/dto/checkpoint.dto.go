@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
 )
 
@@ -18,4 +20,8 @@ type CreateCheckpointsDTO struct {
 
 type GetCheckpointWithCategoryDTO struct {
 	Category string `json:"category"`
+}
+
+type SetTimeDTO struct {
+	Time time.Duration `json:"time"`
 }
