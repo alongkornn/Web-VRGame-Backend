@@ -11,17 +11,14 @@ import (
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/dto"
 	checkpoint_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
+	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
 )
 
 // แสดงด่านปัจจุบันของผู้เล่น(โดยจะเข้าถึงผ่านไอดีของผู้เล่น)
 func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkpoint_models.Checkpoints, int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -90,12 +87,7 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 
 // บันทึกด่านปัจจุบันลงในด่านที่เล่นผ่านแล้วโดยจะตรวจสอบว่าคะแนนผ่านเกณฑ์หรือยัง
 func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userID).
-		Limit(1)
+	hasUser := utils.HasUser(userID)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -131,12 +123,7 @@ func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
 
 // แสดงด่านที่ผู้เล่นเล่นผ่าน(โดยจะเข้าถึงผ่านไอดีของผู้เล่น)
 func GetCompleteCheckpointByUserId(userId string, ctx context.Context) ([]checkpoint_models.Checkpoints, int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -189,11 +176,7 @@ func GetCheckpointWithCategory(category string, ctx context.Context) ([]*checkpo
 
 // เพิ่มเวลาในด่านปัจจุบัน
 func SetTime(userId string, time time.Duration, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {

@@ -9,16 +9,12 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	score_models "github.com/alongkornn/Web-VRGame-Backend/internal/score/models"
+	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"google.golang.org/api/iterator"
 )
 
 func GetScoreByUserId(userId string, ctx context.Context) (*score_models.Score, int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -83,12 +79,7 @@ func GetAllScoreByCheckpointId(checkpointId string, ctx context.Context) ([]*sco
 }
 
 func SetScore(userId string, score int, ctx context.Context) (int, error) {
-	hasUser := config.DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
-		Where("id", "==", userId).
-		Limit(1)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
