@@ -10,8 +10,7 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/internal/admin/dto"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	checkpoint_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
-	"github.com/alongkornn/Web-VRGame-Backend/internal/user/utils"
-	"github.com/alongkornn/Web-VRGame-Backend/internal/admin/utils"
+	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/iterator"
 )
@@ -53,7 +52,7 @@ func AddminApprovedUserRegister(userId string, approved auth_models.Status, ctx 
 
 // ผู้ดูแลระบบลบผู้เล่นออก
 func AdminRemoveUser(userId string, ctx context.Context) (int, error) {
-	hasUser := user_utils.HasUser(userId)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -87,7 +86,7 @@ func AdminRemoveUser(userId string, ctx context.Context) (int, error) {
 
 // ลบผู้ดูแลระบบออก
 func RemoveAdmin(adminId string, ctx context.Context) (int, error) {
-	hasAdmin := admin_utils.HasAdmin(adminId)
+	hasAdmin := utils.HasAdmin(adminId)
 
 	adminDoc, err := hasAdmin.Documents(ctx).Next()
 	if err != nil {
@@ -156,7 +155,7 @@ func GetAllAdmin(ctx context.Context) ([]*auth_models.User, int, error) {
 
 // แสดงผู้ดูแลระบบโดยเข้าถึงผ่านไอดีผู้ดูแลระบบ
 func GetAdminById(adminId string, ctx context.Context) (*auth_models.User, int, error) {
-	hasAdmin := admin_utils.HasAdmin(adminId)
+	hasAdmin := utils.HasAdmin(adminId)
 
 	adminDoc, err := hasAdmin.Documents(ctx).Next()
 	if err != nil {
@@ -173,7 +172,7 @@ func GetAdminById(adminId string, ctx context.Context) (*auth_models.User, int, 
 
 // เพิ่มผู้ดูแลระบบ
 func CreateAdmin(userId string, role auth_models.Role, ctx context.Context) (int, error) {
-	hasUser := user_utils.HasUser(userId)
+	hasUser := utils.HasUser(userId)
 
 	userdoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -205,7 +204,7 @@ func CreateAdmin(userId string, role auth_models.Role, ctx context.Context) (int
 
 // แก้ไขข้อมูลผู้ดูแลระบบ
 func UpdateDataAdmin(adminId string, updateDTO dto.UpdateDTO, ctx context.Context) (int, error) {
-	hasAdmin := admin_utils.HasAdmin(adminId)
+	hasAdmin := utils.HasAdmin(adminId)
 
 	adminDoc, err := hasAdmin.Documents(ctx).Next()
 	if err != nil {
@@ -253,7 +252,7 @@ func UpdateDataAdmin(adminId string, updateDTO dto.UpdateDTO, ctx context.Contex
 
 // แก้ไขรหัสผ่านของผู้ดูแลระบบ
 func UpdatePasswordAdmin(adminId, password, newPassword string, ctx context.Context) (int, error) {
-	hasAdmin := admin_utils.HasAdmin(adminId)
+	hasAdmin := utils.HasAdmin(adminId)
 
 	adminDoc, err := hasAdmin.Documents(ctx).Next()
 	if err != nil {
@@ -294,7 +293,7 @@ func UpdatePasswordAdmin(adminId, password, newPassword string, ctx context.Cont
 
 // แสดงจุดเด่นของผู้เล่น
 func ShowScoreWiteStrength(userId string, ctx context.Context) ([]*checkpoint_models.Category, int, error) {
-	hasUser := user_utils.HasUser(userId)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {
@@ -321,7 +320,7 @@ func ShowScoreWiteStrength(userId string, ctx context.Context) ([]*checkpoint_mo
 
 // แสดงจุดด้อยของผู้เล่น
 func ShowScoreWiteWeaknesses(userId string, ctx context.Context) ([]*checkpoint_models.Category, int, error) {
-	hasUser := user_utils.HasUser(userId)
+	hasUser := utils.HasUser(userId)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {
