@@ -6,3 +6,6 @@ app:
 
 jwt:
   secret_key: w@dPQ7@M%auWxDNM!#9S
+
+token:
+  super_secret_key: a@lkDKP%1!skeLOkd#
