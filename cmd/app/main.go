@@ -11,6 +11,7 @@ import (
 	scoreRoute "github.com/alongkornn/Web-VRGame-Backend/internal/score/routes"
 	userRoute "github.com/alongkornn/Web-VRGame-Backend/internal/user/routes"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -19,6 +20,13 @@ func main() {
 	config.InitFirebase()
 
 	e := echo.New()
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+		AllowHeaders: []string{"Content-Type", "Authorization"},
+	}))
+
 	globalGroup := e.Group(config.GetEnv("app.prefix"))
 
 	globalGroup.POST("/", func(c echo.Context) error {
@@ -31,7 +39,6 @@ func main() {
 	adminRoute.AdminRoute(globalGroup)
 	checkpointRoute.CheckpointRoute(globalGroup)
 	userRoute.UserRoute(globalGroup)
-
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))
