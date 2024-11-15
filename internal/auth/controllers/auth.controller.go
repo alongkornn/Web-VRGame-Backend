@@ -35,5 +35,16 @@ func Login(ctx echo.Context) error {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 	return utils.SendSuccess(ctx, status, "Successfully to Login", data)
+
+
+
+
+
+
+
+
+
+
+	
 }
 
