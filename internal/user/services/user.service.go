@@ -22,12 +22,12 @@ func GetUserByID(userId string, ctx context.Context) (*auth_models.User, int, er
 		return nil, http.StatusBadRequest, errors.New("user not found")
 	}
 
-	var user *auth_models.User
+	var user auth_models.User
 	if err := userDoc.DataTo(user); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 
-	return user, http.StatusOK, nil
+	return &user, http.StatusOK, nil
 }
 
 // แสดงผู้เล่นทั้งหมด
