@@ -64,7 +64,7 @@ func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int
 	hasUser := config.DB.Collection("User").Where("email", "==", email).Limit(1)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
-	if err != nil || len(userDoc) == 0{
+	if err != nil || len(userDoc) == 0 {
 		return nil, http.StatusBadRequest, errors.New("user not found")
 	}
 
@@ -97,5 +97,10 @@ func generateToken(user *models.User) (string, error) {
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
+	tokenString, err := token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
+
+	if err != nil {
+		return "", errors.New("invalid create token")
+	}
+	return tokenString, nil
 }
