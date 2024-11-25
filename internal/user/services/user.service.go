@@ -23,7 +23,7 @@ func GetUserByID(userId string, ctx context.Context) (*auth_models.User, int, er
 	}
 
 	var user auth_models.User
-	if err := userDoc.DataTo(user); err != nil {
+	if err := userDoc.DataTo(&user); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 
