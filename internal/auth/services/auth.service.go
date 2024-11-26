@@ -35,20 +35,22 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 		return http.StatusBadRequest, errors.New("hash password is error")
 	}
 	user := models.User{
-		ID:         uuid.New().String(),
-		FirstName:  registerDTO.FirstName,
-		LastName:   registerDTO.LastName,
-		Email:      registerDTO.Email,
-		Password:   string(hashPassword),
-		Class:      registerDTO.Class,
-		Number:     registerDTO.Number,
-		Level:      1,
-		Score:      0,
-		Role:       models.Player,
-		Status:     models.Pending,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-		Is_Deleted: false,
+		ID:                   uuid.New().String(),
+		FirstName:            registerDTO.FirstName,
+		LastName:             registerDTO.LastName,
+		Email:                registerDTO.Email,
+		Password:             string(hashPassword),
+		Class:                registerDTO.Class,
+		Number:               registerDTO.Number,
+		Level:                1,
+		Score:                0,
+		CurrentCheckpoint:    nil,
+		CompletedCheckpoints: nil,
+		Role:                 models.Player,
+		Status:               models.Pending,
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
+		Is_Deleted:           false,
 	}
 
 	_, _, err = config.DB.Collection("User").Add(ctx, user)
