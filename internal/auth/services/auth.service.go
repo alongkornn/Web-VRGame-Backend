@@ -43,6 +43,7 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 		Class:      registerDTO.Class,
 		Number:     registerDTO.Number,
 		Level:      1,
+		Score:      0,
 		Role:       models.Player,
 		Status:     models.Pending,
 		CreatedAt:  time.Now(),
