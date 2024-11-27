@@ -11,7 +11,7 @@ func UserRoute(e *echo.Group) {
 	// แสดงผู้เล่นแค่คนเดียว
 	userGroup.GET("/:userId", controllers.GetUserByID)
 	// แสดงผู้เล่นทั้งหมด
-	userGroup.GET("/", controllers.GetAllUser)
+	userGroup.GET("", controllers.GetAllUser)
 	// แสดงผู้เล่นที่ยังไม่ได้รับการอนุมัติ
 	userGroup.GET("/pending", controllers.GetUserPending)
 	// แก้ไขข้อมูลผู้เล่น
