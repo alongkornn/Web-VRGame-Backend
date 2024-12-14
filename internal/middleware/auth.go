@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 func JWTMiddlewareWithCookie(secretKey string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey:  []byte(secretKey),
-		TokenLookup: "cookie:token", // เปลี่ยนให้ Middleware อ่านจาก Cookie ชื่อ "token"
+		TokenLookup: "cookie:token", // ดึง token จาก cookie ชื่อ "token"
 		ContextKey:  "user",         // บันทึกข้อมูลผู้ใช้ใน Context Key ชื่อ "user"
 	})
 }

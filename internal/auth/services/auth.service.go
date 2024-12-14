@@ -63,33 +63,29 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 }
 
 // เข้าสู่ระบบ
-func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int, error) {
+func Login(email, password string, ctx context.Context) (string, int, error) {
 	hasUser := config.DB.Collection("User").Where("email", "==", email).Limit(1)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDoc) == 0 {
-		return nil, http.StatusBadRequest, errors.New("user not found")
+		return "", http.StatusBadRequest, errors.New("user not found")
 	}
 
 	var user models.User
 	if err := userDoc[0].DataTo(&user); err != nil {
-		return nil, http.StatusInternalServerError, errors.New("error retrieving user data")
+		return "nil", http.StatusInternalServerError, errors.New("error retrieving user data")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, http.StatusUnauthorized, errors.New("invalid password")
+		return "nil", http.StatusUnauthorized, errors.New("invalid password")
 	}
 
 	token, err := generateToken(&user)
 	if err != nil {
-		return nil, http.StatusUnauthorized, errors.New("failed to create token")
+		return "nil", http.StatusUnauthorized, errors.New("failed to create token")
 	}
 
-	data := dto.ResponseLogin{
-		Token: token,
-	}
-
-	return &data, http.StatusOK, nil
+	return token, http.StatusOK, nil
 }
 
 // สร้าง token ขึ้นมา

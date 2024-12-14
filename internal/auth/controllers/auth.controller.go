@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
@@ -65,12 +64,10 @@ func Login(ctx echo.Context) error {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 
-	tokenString := fmt.Sprintf("%v", token)
-
 	// เก็บ JWT ใน Cookies
 	cookie := new(http.Cookie)
 	cookie.Name = "token"
-	cookie.Value = tokenString
+	cookie.Value = token
 	cookie.HttpOnly = true
 	cookie.Secure = true // ใช้ HTTPS เท่านั้น
 	cookie.SameSite = http.SameSiteStrictMode
