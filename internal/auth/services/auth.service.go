@@ -95,9 +95,9 @@ func Login(email, password string, ctx context.Context) (*dto.ResponseLogin, int
 // สร้าง token ขึ้นมา
 func generateToken(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": user.ID,
-		"role":    user.Role,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		"username": user.FirstName,
+		"role":     user.Role,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(config.GetEnv("jwt.secret_key")))
