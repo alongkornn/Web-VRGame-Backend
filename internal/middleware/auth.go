@@ -12,12 +12,11 @@ import (
 )
 
 // JWTMiddleware ตรวจสอบว่า JWT token ถูกต้องและ decode เพื่อใช้ข้อมูลข้างใน token
-func JWTMiddleware(secretKey string) echo.MiddlewareFunc {
+func JWTMiddlewareWithCookie(secretKey string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey:  []byte(secretKey),
-		TokenLookup: "header:Authorization",
-		AuthScheme:  "Bearer",
-		ContextKey:  "user",
+		TokenLookup: "cookie:token", // เปลี่ยนให้ Middleware อ่านจาก Cookie ชื่อ "token"
+		ContextKey:  "user",         // บันทึกข้อมูลผู้ใช้ใน Context Key ชื่อ "user"
 	})
 }
 

@@ -67,39 +67,14 @@ func Login(ctx echo.Context) error {
 
 	tokenString := fmt.Sprintf("%v", token)
 
-	// ใช้ echo.Context wrapper สำหรับ standard http
-	req := ctx.Request()
-	res := ctx.Response()
-
-	// สร้าง session ใหม่
-	session, err := store.Get(req, "authentication")
-	if err != nil {
-		// log error เพื่อ debug
-		println("Session Error:", err.Error())
-		return utils.SendError(ctx, http.StatusInternalServerError, "Session error", nil)
-	}
-
-	// เก็บข้อมูลใน session
-	session.Values["token"] = tokenString
-	session.Values["authenticated"] = true
-
-	// บันทึก session ด้วย http.ResponseWriter
-	err = session.Save(req, res.Writer)
-	if err != nil {
-		// log error เพื่อ debug
-		println("Save Session Error:", err.Error())
-		return utils.SendError(ctx, http.StatusInternalServerError, "Cannot save session", err.Error())
-	}
-
-	// สร้าง cookie แบบ manual เพิ่มเติม
+	// เก็บ JWT ใน Cookies
 	cookie := new(http.Cookie)
-	cookie.Name = "authentication"
+	cookie.Name = "token"
 	cookie.Value = tokenString
-	cookie.Path = "/"
-	cookie.MaxAge = 3600
 	cookie.HttpOnly = true
-	cookie.Secure = false
-	cookie.SameSite = http.SameSiteLaxMode
+	cookie.Secure = true // ใช้ HTTPS เท่านั้น
+	cookie.SameSite = http.SameSiteStrictMode
+	cookie.Path = "/"
 	ctx.SetCookie(cookie)
 
 	return utils.SendSuccess(ctx, status, "Successfully to Login", token)
