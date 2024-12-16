@@ -31,27 +31,6 @@ var (
 	key   = "a@lkDKP%1!skeLOkd#" // ต้องแน่ใจว่าค่านี้ไม่เป็นค่าว่าง
 )
 
-func init() {
-	// ตรวจสอบว่ามี key หรือไม่
-	if len(key) == 0 {
-		panic("SESSION_KEY is not set in environment variables")
-
-	}
-
-	// สร้าง store ด้วย key ที่กำหนด
-	store = sessions.NewCookieStore([]byte(key))
-
-	// กำหนดค่าเริ่มต้นสำหรับ store
-	store.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-		Domain:   "", // ระบุ domain ถ้าจำเป็น เช่น "localhost"
-	}
-}
-
 func Login(ctx echo.Context) error {
 	var loginDTO dto.LoginDTO
 	if err := ctx.Bind(&loginDTO); err != nil {
