@@ -23,15 +23,15 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3000"},
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowHeaders: []string{"Content-Type", "Authorization"},
+		AllowOrigins:     []string{"http://localhost:3000"}, // Origin ที่อนุญาต
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization},
+		AllowCredentials: true, // สำคัญ! เพื่ออนุญาตการส่งคุกกี้
 	}))
-
-	// เรียกใช้ middleware ในทุก api ที่เรียกโดย e
 
 	globalGroup := e.Group(config.GetEnv("app.prefix"))
 
+	// เรียกใช้ middleware ในทุก api ที่เรียกโดย middleware
 	middleware := e.Group("/test")
 	middleware.Use(middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 

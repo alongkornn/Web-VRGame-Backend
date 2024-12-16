@@ -16,7 +16,7 @@ var DB *firestore.Client
 func InitFirebase() {
 	var err error
 	// โหลด serviceAccountKey.json
-	sa := option.WithCredentialsFile("/Users/VR_1/Desktop/gamevr-88a69-firebase-adminsdk-ukt0n-8b4fa2e924.json")
+	sa := option.WithCredentialsFile("/Users/alongkorn/Desktop/gamevr-88a69-firebase-adminsdk-ukt0n-a862e722f6.json")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

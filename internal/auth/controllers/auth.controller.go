@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/services"
 	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,13 +24,6 @@ func Register(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Created User Successfully", nil)
 }
 
-// เข้าสู้ระบบ
-// สร้าง key ที่ปลอดภัย - ควรมีความยาวอย่างน้อย 32 bytes
-var (
-	store *sessions.CookieStore
-	key   = "a@lkDKP%1!skeLOkd#" // ต้องแน่ใจว่าค่านี้ไม่เป็นค่าว่าง
-)
-
 func Login(ctx echo.Context) error {
 	var loginDTO dto.LoginDTO
 	if err := ctx.Bind(&loginDTO); err != nil {
@@ -47,10 +40,11 @@ func Login(ctx echo.Context) error {
 	cookie := new(http.Cookie)
 	cookie.Name = "token"
 	cookie.Value = token
-	cookie.HttpOnly = true
-	cookie.Secure = true // ใช้ HTTPS เท่านั้น
-	cookie.SameSite = http.SameSiteStrictMode
+	cookie.HttpOnly = false
+	cookie.Secure = false                  // ใช้ true สำหรับ HTTPS เท่านั้น ในกรณีนี้เราต้องการทดสอบทเท่านั้น
+	cookie.SameSite = http.SameSiteLaxMode // สำหรับการ Cross-origin
 	cookie.Path = "/"
+	cookie.Expires = time.Now().Add(24 * time.Hour) // คุกกี้หมดอายุใน 1 วัน
 	ctx.SetCookie(cookie)
 
 	return utils.SendSuccess(ctx, status, "Successfully to Login", token)
