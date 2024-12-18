@@ -39,7 +39,7 @@ func main() {
 	})
 
 	// ตรวจสอบว่า token ถูกต้องหรือไม่
-	protectRoute := e.Group("/")
+	protectRoute := e.Group("/api")
 	protectRoute.Use(middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 	protectRoute.GET("/protected", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{
