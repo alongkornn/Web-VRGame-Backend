@@ -91,6 +91,8 @@ func Login(email, password string, ctx context.Context) (string, int, error) {
 // สร้าง token ขึ้นมา
 func generateToken(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
+		"use_id":   user.ID,
+		"email":    user.Email,
 		"username": user.FirstName,
 		"role":     user.Role,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(),
