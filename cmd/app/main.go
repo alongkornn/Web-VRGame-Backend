@@ -42,8 +42,9 @@ func main() {
 	protectRoute := e.Group("/api")
 	protectRoute.Use(middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 	protectRoute.GET("/protected", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{
+		return c.JSON(http.StatusOK, map[string]interface{}{
 			"message": "You are authorized",
+			"status":  200,
 		})
 	})
 
