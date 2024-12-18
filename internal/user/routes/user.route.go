@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"github.com/alongkornn/Web-VRGame-Backend/config"
+	middlewares "github.com/alongkornn/Web-VRGame-Backend/internal/middleware"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/user/controllers"
 	"github.com/labstack/echo/v4"
 )
@@ -11,7 +13,7 @@ func UserRoute(e *echo.Group) {
 	// แสดงผู้เล่นแค่คนเดียว
 	userGroup.GET("/:userId", controllers.GetUserByID)
 	// แสดงผู้เล่นทั้งหมด
-	userGroup.GET("", controllers.GetAllUser)
+	userGroup.GET("", controllers.GetAllUser, middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 	// แสดงผู้เล่นที่ยังไม่ได้รับการอนุมัติ
 	userGroup.GET("/pending", controllers.GetUserPending)
 	// แก้ไขข้อมูลผู้เล่น
