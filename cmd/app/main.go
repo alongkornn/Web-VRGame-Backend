@@ -44,7 +44,6 @@ func main() {
 	protectRoute.GET("/protected", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"message": "You are authorized",
-			"status":  200,
 		})
 	})
 
