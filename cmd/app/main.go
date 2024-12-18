@@ -32,20 +32,18 @@ func main() {
 	globalGroup := e.Group(config.GetEnv("app.prefix"))
 
 	// เรียกใช้ middleware ในทุก api ที่เรียกโดย middleware
-	middleware := e.Group("/test")
-	middleware.Use(middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
+	protectRoute := e.Group("/test")
+	protectRoute.Use(middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 
 	globalGroup.POST("/", func(c echo.Context) error {
 		c.JSON(http.StatusOK, map[string]string{"message": "Hello world."})
 		return nil
 	})
 
-	middleware.GET("/protected", func(c echo.Context) error {
-		// หากตรวจสอบผ่าน, จะมีข้อมูลของผู้ใช้ใน context
-		user := c.Get("user")
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"message": "Welcome, authorized user!",
-			"user":    user,
+	// ตรวจสอบว่า token ถูกต้องหรือไม่
+	protectRoute.GET("/protected", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"message": "your passed",
 		})
 	})
 
