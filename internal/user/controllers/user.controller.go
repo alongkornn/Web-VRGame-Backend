@@ -79,3 +79,13 @@ func SetSumSocore(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to set score", nil)
 }
+
+func GetUserBySortScore(ctx echo.Context) error {
+	users, status, err := services.GetUserBySortScore(ctx.Request().Context())
+
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to fetch User", users)
+}

@@ -196,3 +196,35 @@ func SetSumScore(userId string, ctx context.Context) (int, error) {
 
 	return http.StatusOK, nil
 }
+
+func GetUserBySortScore(ctx context.Context) ([]*auth_models.User, int, error) {
+	iter := config.DB.Collection("User").Where("is_deleted", "=", false).
+		Where("status", "==", auth_models.Approved).
+		Where("role", "==", auth_models.Player).
+		OrderBy("score", firestore.Desc).
+		Documents(ctx)
+
+	defer iter.Stop()
+
+	var users []*auth_models.User
+
+	for {
+		userDoc, err := iter.Next()
+		if err == iterator.Done {
+			if len(users) == 0 {
+				return nil, http.StatusNotFound, errors.New("user not found")
+			}
+			break
+		}
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		var user auth_models.User
+		if err := userDoc.DataTo(&user); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		users = append(users, &user)
+	}
+
+	return users, http.StatusOK, nil
+}

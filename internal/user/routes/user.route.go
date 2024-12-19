@@ -22,4 +22,6 @@ func UserRoute(e *echo.Group) {
 	userGroup.GET("/sumsocre/:userId", controllers.GetSumScore)
 	// รวมคะแนนทั้งที่ผู้เล่นทำได้
 	userGroup.POST("/set/sumscore/:userId", controllers.SetSumSocore)
+	// ดึงข้อมูลผู้ใช้โดยเรียงคะแนนจากมากไปน้อย
+	userGroup.GET("/sort/score", controllers.GetUserBySortScore)
 }
