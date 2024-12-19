@@ -26,8 +26,6 @@ type User struct {
 	LastName             string                `json:"lastname" firestore:"lastname"`
 	Email                string                `json:"email" firestore:"email"`
 	Password             string                `json:"password" firestore:"password"`
-	Class                string                `json:"class,omitempty" firestore:"class,omitempty"`
-	Number               string                `json:"number,omitempty" firestore:"number,omitempty"`
 	Level                int                   `json:"level,omitempty" firestore:"level,omitempty"`
 	Score                int                   `json:"score,omitempty" firestore:"score"`
 	Role                 Role                  `json:"role" firestore:"role"`

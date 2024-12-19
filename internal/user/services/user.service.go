@@ -198,7 +198,7 @@ func SetSumScore(userId string, ctx context.Context) (int, error) {
 }
 
 func GetUserBySortScore(ctx context.Context) ([]*auth_models.User, int, error) {
-	iter := config.DB.Collection("User").Where("is_deleted", "=", false).
+	iter := config.DB.Collection("User").Where("is_deleted", "==", false).
 		Where("status", "==", auth_models.Approved).
 		Where("role", "==", auth_models.Player).
 		OrderBy("score", firestore.Desc).

@@ -10,7 +10,6 @@ import (
 func UserRoute(e *echo.Group) {
 	userGroup := e.Group("/user")
 
-	userGroup.Use(middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 	// แสดงผู้เล่นแค่คนเดียว
 	userGroup.GET("/:userId", controllers.GetUserByID)
 	// แสดงผู้เล่นทั้งหมด
@@ -24,5 +23,5 @@ func UserRoute(e *echo.Group) {
 	// รวมคะแนนทั้งที่ผู้เล่นทำได้
 	userGroup.POST("/set/sumscore/:userId", controllers.SetSumSocore)
 	// ดึงข้อมูลผู้ใช้โดยเรียงคะแนนจากมากไปน้อย
-	userGroup.GET("/sort/score", controllers.GetUserBySortScore)
+	userGroup.GET("/sort/score", controllers.GetUserBySortScore, middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 }
