@@ -13,13 +13,19 @@ import (
 // ลงทะเบียน
 func Register(ctx echo.Context) error {
 	var registerDTO dto.RegisterDTO
+
 	if err := ctx.Bind(&registerDTO); err != nil {
 		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
 	}
 
 	status, err := services.Register(ctx.Request().Context(), &registerDTO)
 	if err != nil {
-		return utils.SendError(ctx, status, "Failed to create User", err.Error())
+		return utils.SendError(ctx, status, "Failed to create User", nil)
+	}
+
+	status, err = services.SendVerificationEmail(ctx.Request().Context(), registerDTO.Email)
+	if err != nil {
+		return utils.SendError(ctx, status, "Failed to send verification email", nil)
 	}
 	return utils.SendSuccess(ctx, status, "Created User Successfully", nil)
 }

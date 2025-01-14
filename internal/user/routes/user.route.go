@@ -11,7 +11,7 @@ func UserRoute(e *echo.Group) {
 	userGroup := e.Group("/user")
 
 	// แสดงผู้เล่นแค่คนเดียว
-	userGroup.GET("/:userId", controllers.GetUserByID)
+	userGroup.GET("/:userId", controllers.GetUserByID, middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
 	// แสดงผู้เล่นทั้งหมด
 	userGroup.GET("", controllers.GetAllUser)
 	// แสดงผู้เล่นที่ยังไม่ได้รับการอนุมัติ
