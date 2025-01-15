@@ -12,7 +12,7 @@ import (
 
 // แสดงด่านปัจจุบันของผู้เล่น(โดยจะเข้าถึงผ่านไอดีผู้เล่น)
 func GetCurrentCheckpointFromUser(ctx echo.Context) error {
-	userID := ctx.Param("user")
+	userID := ctx.Param("userId")
 
 	checkpoint, status, err := services.GetCurrentCheckpointFromUserId(userID, ctx.Request().Context())
 	if err != nil {

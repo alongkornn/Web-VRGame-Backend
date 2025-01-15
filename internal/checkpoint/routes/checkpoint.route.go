@@ -9,7 +9,7 @@ func CheckpointRoute(g *echo.Group) {
 	checkpointGroup := g.Group("/checkpoint")
 
 	// แสดงด่านปัจจุบันโดยเข้าถึงผ่านไอดีผู้เล่น
-	checkpointGroup.GET("/current/:user", controllers.GetCurrentCheckpointFromUser)
+	checkpointGroup.GET("/current/:userId", controllers.GetCurrentCheckpointFromUser)
 	// แสดงทุกด่านทุกหมวดหมู่
 	checkpointGroup.GET("/", controllers.GetAllCheckpoint)
 	// สร้างด่านใหม่

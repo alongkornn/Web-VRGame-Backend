@@ -10,7 +10,8 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
-	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	checkpoin_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
 	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -38,22 +39,29 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, string, e
 		return http.StatusBadRequest, "", errors.New("hash password is error")
 	}
 
-	checkpointID, err := utils.GetCheckpointID("ด่านหนึ่ง")
+	hasCheckpoint := utils.GetCheckpointID("ด่านหนึ่ง")
+
+	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
 	if err != nil {
 		return http.StatusNotFound, "", errors.New("checkpoint not found")
 	}
 
-	user := models.User{
+	var currentCheckpoint checkpoin_models.Checkpoints
+	if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
+		return http.StatusInternalServerError, "", err
+	}
+
+	user := auth_models.User{
 		ID:                   uuid.New().String(),
 		FirstName:            registerDTO.FirstName,
 		LastName:             registerDTO.LastName,
 		Email:                registerDTO.Email,
 		Password:             string(hashPassword),
 		Score:                0,
-		CurrentCheckpoint:    checkpointID,
+		CurrentCheckpoint:    currentCheckpoint.ID,
 		CompletedCheckpoints: nil,
-		Role:                 models.Player,
-		Status:               models.Pending,
+		Role:                 auth_models.Player,
+		Status:               auth_models.Pending,
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
 		VerifyEmail:          false,
@@ -83,7 +91,7 @@ func Login(email, password string, ctx context.Context) (string, int, error) {
 		return "", http.StatusBadRequest, errors.New("user not found")
 	}
 
-	var user models.User
+	var user auth_models.User
 	if err := userDoc[0].DataTo(&user); err != nil {
 		return "nil", http.StatusInternalServerError, errors.New("error retrieving user data")
 	}
@@ -101,7 +109,7 @@ func Login(email, password string, ctx context.Context) (string, int, error) {
 }
 
 // สร้าง token ขึ้นมา
-func generateToken(user *models.User) (string, error) {
+func generateToken(user *auth_models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":  user.ID,
 		"email":    user.Email,
