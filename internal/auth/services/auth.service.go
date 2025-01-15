@@ -42,7 +42,6 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, string, e
 		LastName:             registerDTO.LastName,
 		Email:                registerDTO.Email,
 		Password:             string(hashPassword),
-		Level:                1,
 		Score:                0,
 		CurrentCheckpoint:    nil,
 		CompletedCheckpoints: nil,
