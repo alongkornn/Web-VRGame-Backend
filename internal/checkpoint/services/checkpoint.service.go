@@ -30,7 +30,19 @@ func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkp
 		return nil, http.StatusInternalServerError, err
 	}
 
-	return user.CurrentCheckpoint, http.StatusOK, nil
+	hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
+
+	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
+	if err != nil {
+		return nil, http.StatusNotFound, errors.New("checkpoint not found")
+	}
+
+	var currentCheckpoint checkpoint_models.Checkpoints
+	if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	return &currentCheckpoint, http.StatusOK, nil
 }
 
 // แสดงด่านทั้งหมดทุกหมวดหมู่
@@ -69,9 +81,10 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 	checkpoint := checkpoint_models.Checkpoints{
 		ID:         uuid.New().String(),
 		Name:       checkpointDTO.Name,
-		MaxScore:   checkpointDTO.MaxScore,
-		PassScore:  checkpointDTO.PassScore,
 		Category:   checkpointDTO.Category,
+		MaxScore:   100,
+		PassScore:  50,
+		TimeLimit:  "5 นาที",
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 		Is_Deleted: false,
@@ -86,7 +99,7 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 }
 
 // บันทึกด่านปัจจุบันลงในด่านที่เล่นผ่านแล้วโดยจะตรวจสอบว่าคะแนนผ่านเกณฑ์หรือยัง
-func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
+func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (int, error) {
 	hasUser := utils.HasUser(userID)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
@@ -99,11 +112,28 @@ func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	if user.CurrentCheckpoint.Score >= user.CurrentCheckpoint.PassScore && user.Score <= user.CurrentCheckpoint.MaxScore {
+	hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
+
+	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("checkpoint not found")
+	}
+
+	var currentCheckpoint checkpoint_models.Checkpoints
+	if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	completeCheckpoint := checkpoint_models.CompleteCheckpoint{
+		CheckpointID: currentCheckpoint.ID,
+		Score:        score,
+	}
+
+	if score >= currentCheckpoint.PassScore && score <= currentCheckpoint.MaxScore {
 		_, err := userDoc.Ref.Update(ctx, []firestore.Update{
 			{
 				Path:  "completed_checkpoints",
-				Value: user.CurrentCheckpoint,
+				Value: completeCheckpoint,
 			},
 			{
 				Path:  "updated_at",
@@ -122,8 +152,10 @@ func SaveCheckpointToComplete(userID string, ctx context.Context) (int, error) {
 }
 
 // แสดงด่านที่ผู้เล่นเล่นผ่าน(โดยจะเข้าถึงผ่านไอดีของผู้เล่น)
-func GetCompleteCheckpointByUserId(userId string, ctx context.Context) ([]checkpoint_models.Checkpoints, int, error) {
-	hasUser := utils.HasUser(userId)
+func GetCheckpointDetails(userID string, ctx context.Context) ([]checkpoint_models.CheckpointDetail, int, error) {
+	var checkpointDetails []checkpoint_models.CheckpointDetail
+
+	hasUser := utils.HasUser(userID)
 
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
@@ -135,12 +167,36 @@ func GetCompleteCheckpointByUserId(userId string, ctx context.Context) ([]checkp
 		return nil, http.StatusInternalServerError, err
 	}
 
-	checkpoints := make([]checkpoint_models.Checkpoints, 0, len(user.CompletedCheckpoints))
-	for _, checkpoint := range user.CompletedCheckpoints {
-		checkpoints = append(checkpoints, *checkpoint)
+	// วนลูปผ่าน CompletedCheckpoints ของผู้ใช้
+	for _, completedCheckpoint := range user.CompletedCheckpoints {
+		checkpointID := completedCheckpoint.CheckpointID
+		score := completedCheckpoint.Score
+
+		// ดึงข้อมูลรายละเอียดของ checkpoint จาก Firestore
+		checkpointRef := config.DB.Collection("Checkpoints").Doc(checkpointID)
+		doc, err := checkpointRef.Get(context.Background())
+		if err != nil {
+			return nil, http.StatusInternalServerError, err // ถ้าไม่พบข้อมูลให้หยุดและแสดง error
+		}
+
+		// ดึงข้อมูลจากเอกสารที่ได้รับมา
+		var checkpointData map[string]interface{}
+		doc.DataTo(&checkpointData)
+
+		// ดึงชื่อด่านและหมวดหมู่
+		name := checkpointData["name"].(string)
+		category := checkpointData["category"].(string)
+
+		// รวมข้อมูลที่ได้ใน CheckpointDetail
+		checkpointDetails = append(checkpointDetails, checkpoint_models.CheckpointDetail{
+			CheckpointID: checkpointID,
+			Name:         name,
+			Category:     category,
+			Score:        score,
+		})
 	}
 
-	return checkpoints, http.StatusOK, nil
+	return checkpointDetails, http.StatusOK, nil
 }
 
 // แสดงทุกด่านตามหมวดหมู่
@@ -190,11 +246,11 @@ func SetTime(userId string, time time.Duration, ctx context.Context) (int, error
 
 	_, err = userDoc[0].Ref.Update(ctx, []firestore.Update{
 		{
-			Path: "user.current_checkpoint.time",
+			Path:  "user.current_checkpoint.time",
 			Value: time,
 		},
 		{
-			Path: "updated_at",
+			Path:  "updated_at",
 			Value: firestore.ServerTimestamp,
 		},
 	})

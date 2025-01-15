@@ -25,7 +25,7 @@ func CreateCheckpointIfNotExists(client *firestore.Client, ctx context.Context) 
 			Category:   models.Projectile,
 			MaxScore:   100,
 			PassScore:  50,
-			TimeLimit: 10 * time.Minute, // 10 นาที
+			TimeLimit:  "5 นาที", // 5 นาที 5 * time.Minute
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 			Is_Deleted: false,

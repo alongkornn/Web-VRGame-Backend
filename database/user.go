@@ -27,8 +27,6 @@ func CreateUserIfNotExists(client *firestore.Client, ctx context.Context) {
 			Password:             "adminaxpi",
 			Role:                 models.Admin,
 			Status:               models.Approved,
-			CurrentCheckpoint:    nil,
-			CompletedCheckpoints: nil,
 			CreatedAt:            time.Now(),
 			UpdatedAt:            time.Now(),
 			Is_Deleted:           false,

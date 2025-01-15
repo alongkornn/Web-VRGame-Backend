@@ -15,7 +15,7 @@ func CheckpointRoute(g *echo.Group) {
 	// สร้างด่านใหม่
 	checkpointGroup.POST("/create", controllers.CreateCheckpoint)
 	// บันทึกด่านปัจจุบันลงในด่านที่เล่นผ่านแล้ว
-	checkpointGroup.POST("/save/checkpoint/complete/:userId", controllers.SaveCheckpointToComplete)
+	checkpointGroup.POST("/save/checkpoint/complete/:score/:userId", controllers.SaveCheckpointToComplete)
 	// แสดงด่านที่เล่นผ่านโดยเข้าถึงผ่านไอดีผู้เล่น
 	checkpointGroup.POST("/get/checkpoint/complete/:userId", controllers.GetCompleteCheckpointByUserId)
 	// แสดงด่านทุกด่านตามหมวดหมู่

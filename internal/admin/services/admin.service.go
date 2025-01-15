@@ -310,12 +310,25 @@ func ShowScoreWiteStrength(userId string, ctx context.Context) ([]*checkpoint_mo
 	if user.CompletedCheckpoints != nil {
 		for _, checkpoint := range user.CompletedCheckpoints {
 			if checkpoint.Score >= 80 {
-				isStrength = append(isStrength, &checkpoint.Category)
+				hasCheckpoint := utils.GetCheckpointByID(checkpoint.CheckpointID)
+
+				checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
+				if err != nil {
+					return nil, http.StatusNotFound, errors.New("checkpoint not found")
+				}
+
+				var currentCheckpoint checkpoint_models.Checkpoints
+				if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
+					return nil, http.StatusInternalServerError, err
+				}
+				isStrength = append(isStrength, &currentCheckpoint.Category)
 			}
 		}
 	}
 
-	return isStrength, http.StatusOK, nil
+	uniqueStrength := removeDuplicates(isStrength)
+
+	return uniqueStrength, http.StatusOK, nil
 }
 
 // แสดงจุดด้อยของผู้เล่น
@@ -337,10 +350,42 @@ func ShowScoreWiteWeaknesses(userId string, ctx context.Context) ([]*checkpoint_
 	if user.CompletedCheckpoints != nil {
 		for _, checkpoint := range user.CompletedCheckpoints {
 			if checkpoint.Score <= 50 {
-				isWeaknesses = append(isWeaknesses, &checkpoint.Category)
+				hasCheckpoint := utils.GetCheckpointByID(checkpoint.CheckpointID)
+
+				checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
+				if err != nil {
+					return nil, http.StatusNotFound, errors.New("checkpoint not found")
+				}
+
+				var currentCheckpoint checkpoint_models.Checkpoints
+				if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
+					return nil, http.StatusInternalServerError, err
+				}
+
+				isWeaknesses = append(isWeaknesses, &currentCheckpoint.Category)
 			}
 		}
 	}
 
-	return isWeaknesses, http.StatusOK, nil
+	uniqueWeaknesses := removeDuplicates(isWeaknesses)
+
+	return uniqueWeaknesses, http.StatusOK, nil
+}
+
+func removeDuplicates(categories []*checkpoint_models.Category) []*checkpoint_models.Category {
+	// ใช้ map เพื่อเก็บค่าที่ไม่ซ้ำกัน โดยใช้ pointer ของ Category เป็น key
+	uniqueCategories := make(map[*checkpoint_models.Category]struct{})
+
+	// วนลูปผ่าน categories แล้วเพิ่มลงใน map
+	for _, category := range categories {
+		uniqueCategories[category] = struct{}{} // struct{} เป็นค่าเปล่าที่ใช้เก็บข้อมูลใน map
+	}
+
+	// สร้าง slice ใหม่เพื่อเก็บค่าที่ไม่ซ้ำกัน
+	var result []*checkpoint_models.Category
+	for category := range uniqueCategories {
+		result = append(result, category)
+	}
+
+	return result
 }

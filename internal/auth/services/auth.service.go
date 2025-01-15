@@ -11,6 +11,7 @@ import (
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -36,6 +37,12 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, string, e
 	if err != nil {
 		return http.StatusBadRequest, "", errors.New("hash password is error")
 	}
+
+	checkpointID, err := utils.GetCheckpointID("ด่านหนึ่ง")
+	if err != nil {
+		return http.StatusNotFound, "", errors.New("checkpoint not found")
+	}
+
 	user := models.User{
 		ID:                   uuid.New().String(),
 		FirstName:            registerDTO.FirstName,
@@ -43,7 +50,7 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, string, e
 		Email:                registerDTO.Email,
 		Password:             string(hashPassword),
 		Score:                0,
-		CurrentCheckpoint:    nil,
+		CurrentCheckpoint:    checkpointID,
 		CompletedCheckpoints: nil,
 		Role:                 models.Player,
 		Status:               models.Pending,

@@ -169,15 +169,11 @@ func SetSumScore(userId string, ctx context.Context) (int, error) {
 
 	// ตรวจสอบว่า CompletedCheckpoints มีข้อมูล
 	var sumScore int
+	var completeCheckpointScore int
 	if user.CompletedCheckpoints != nil {
 		for _, checkpoint := range user.CompletedCheckpoints {
-			sumScore += checkpoint.Score
+			completeCheckpointScore += checkpoint.Score
 		}
-	}
-
-	// เพิ่มคะแนนจาก current_checkpoint หากมีค่า
-	if user.CurrentCheckpoint != nil {
-		sumScore += user.CurrentCheckpoint.Score
 	}
 
 	_, err = userDocs[0].Ref.Update(ctx, []firestore.Update{

@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
+	checkpoint_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
 	score_models "github.com/alongkornn/Web-VRGame-Backend/internal/score/models"
 	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"google.golang.org/api/iterator"
@@ -61,13 +62,25 @@ func GetAllScoreByCheckpointId(checkpointId string, ctx context.Context) ([]*sco
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
-		
-		if user.CurrentCheckpoint.ID == checkpointId {
+
+
+		hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
+
+		checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
+		if err != nil {
+			return nil, http.StatusNotFound, errors.New("checkpoint not found")
+		}
+
+		var currentCheckpoint checkpoint_models.Checkpoints
+		if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		if user.CurrentCheckpoint == checkpointId {
 			score := score_models.Score{
-				CheckpointName: user.CurrentCheckpoint.Name,
-				Category: user.CurrentCheckpoint.Category,
-				Name:  user.FirstName,
-				Score: user.CurrentCheckpoint.Score,
+				CheckpointName: currentCheckpoint.Name,
+				Category:       currentCheckpoint.Category,
+				Name:           user.FirstName,
 			}
 			users_score = append(users_score, &score)
 		} else {
@@ -91,25 +104,18 @@ func SetScore(userId string, score int, ctx context.Context) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	sumScore := user.CurrentCheckpoint.Score + score
-	maxScore := user.CurrentCheckpoint.MaxScore
-
-	if sumScore <= maxScore {
-		_, err = userDoc.Ref.Update(ctx, []firestore.Update{
-			{
-				Path:  "current_checkpoint.score",
-				Value: sumScore,
-			},
-			{
-				Path:  "updated_at",
-				Value: firestore.ServerTimestamp,
-			},
-		})
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-	} else {
-		return http.StatusBadRequest, errors.New("score exceeds maximum score")
+	_, err = userDoc.Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "user.score",
+			Value: score,
+		},
+		{
+			Path:  "updated_at",
+			Value: firestore.ServerTimestamp,
+		},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, err
 	}
 
 	return http.StatusOK, nil
