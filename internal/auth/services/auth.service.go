@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
-	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -18,23 +18,23 @@ import (
 )
 
 // ลงทะเบียน
-func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
+func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, string, error) {
 	hasUser := config.DB.Collection("User").
 		Where("email", "==", registerDTO.Email).
 		Limit(1)
 
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New("error checking user existence")
+		return http.StatusInternalServerError, "", errors.New("error checking user existence")
 	}
 
 	if len(userDoc) > 0 {
-		return http.StatusConflict, errors.New("email already registered")
+		return http.StatusConflict, "", errors.New("email already registered")
 	}
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(registerDTO.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return http.StatusBadRequest, errors.New("hash password is error")
+		return http.StatusBadRequest, "", errors.New("hash password is error")
 	}
 	user := models.User{
 		ID:                   uuid.New().String(),
@@ -50,16 +50,22 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, error) {
 		Status:               models.Pending,
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
+		VerifyEmail:          false,
 		Is_Deleted:           false,
 	}
 
 	_, _, err = config.DB.Collection("User").Add(ctx, user)
 	if err != nil {
 		fmt.Printf("Error adding document: %v\n", err)
-		return http.StatusInternalServerError, errors.New("failed to register user")
+		return http.StatusInternalServerError, "", errors.New("failed to register user")
 	}
 
-	return http.StatusOK, nil
+	token, err := generateEmailVerificationToken(user.ID)
+	if err != nil {
+		return http.StatusInternalServerError, "", errors.New("failed to generate token")
+	}
+
+	return http.StatusOK, token, nil
 }
 
 // เข้าสู่ระบบ
@@ -106,25 +112,16 @@ func generateToken(user *models.User) (string, error) {
 	return tokenString, nil
 }
 
-func SendVerificationEmail(ctx context.Context, e string) (int, error) {
+func SendVerificationEmail(ctx context.Context, e string, token string) (int, error) {
+	// สร้างลิงก์ยืนยันอีเมลที่มีโทเค็นที่สร้างขึ้นเอง
+	verificationLink := fmt.Sprintf("http://yourdomain.com/verify-email?token=%s", token)
 	email := e
 	if email == "" {
 		return http.StatusBadRequest, errors.New("email is required")
 	}
 
-	// สร้างลิงก์ยืนยันอีเมล
-	client, err := utils.FirebaseApp.Auth(context.Background())
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to get Firebase Auth client")
-	}
-
-	link, err := client.EmailVerificationLink(context.Background(), email)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to generate email verification link")
-	}
-
 	// ส่งอีเมลยืนยัน
-	if err := sendEmail(email, link); err != nil {
+	if err := sendEmail(email, verificationLink); err != nil {
 		return http.StatusInternalServerError, errors.New("failed to send email")
 	}
 
@@ -149,4 +146,48 @@ func sendEmail(to, link string) error {
 	dialer := gomail.NewDialer("smtp.gmail.com", 587, from, password)
 
 	return dialer.DialAndSend(msg)
+}
+
+// ฟังก์ชันการสร้างโทเค็น
+func generateEmailVerificationToken(userID string) (string, error) {
+	expirationTime := time.Now().Add(24 * time.Hour) // โทเค็นจะหมดอายุภายใน 24 ชั่วโมง
+	claims := &jwt.StandardClaims{
+		Issuer:    userID,                // userID ของผู้ใช้
+		ExpiresAt: expirationTime.Unix(), // วันหมดอายุ
+	}
+
+	// สร้าง JWT
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(config.GetEnv("jwt.secret_key"))) // ลายเซ็นสำหรับโทเค็น
+	if err != nil {
+		return "", fmt.Errorf("could not create token: %v", err)
+	}
+
+	return tokenString, nil
+}
+
+func VerifyEmail(ctx context.Context, token string) (int, error) {
+	// ตรวจสอบโทเค็นจาก URL
+	claims := &jwt.StandardClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(config.GetEnv("jwt.secret_key")), nil
+	})
+
+	if err != nil {
+		return http.StatusBadRequest, fmt.Errorf("invalid or expired token")
+	}
+
+	// userID จากโทเค็น
+	userID := claims.Issuer
+
+	// อัปเดตฟิลด์ verifyEmail เป็น true ใน Firestore
+	userRef := config.DB.Collection("User").Doc(userID)
+	_, err = userRef.Update(ctx, []firestore.Update{
+		{Path: "VerifyEmail", Value: true},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to update email verification status in Firestore: %v", err)
+	}
+
+	return http.StatusOK, nil
 }

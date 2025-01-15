@@ -35,5 +35,6 @@ type User struct {
 	Time                 string                `json:"time,omitempty" firestore:"time,omitempty"`
 	CreatedAt            time.Time             `json:"created_at" firestore:"created_at"`
 	UpdatedAt            time.Time             `json:"updated_at" firestore:"updated_at"`
+	VerifyEmail          bool                  `json:"verify_email" firestore:"verify_email"`
 	Is_Deleted           bool                  `json:"is_deleted" firestore:"is_deleted"`
 }
