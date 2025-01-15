@@ -19,7 +19,7 @@ func GetCurrentCheckpointFromUser(ctx echo.Context) error {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 
-	return utils.SendSuccess(ctx, status, "Add checkpoint success", checkpoint)
+	return utils.SendSuccess(ctx, status, "fetch checkpoint success", checkpoint)
 }
 
 // แสดงทุกด่านทุกหมวดหมู่
