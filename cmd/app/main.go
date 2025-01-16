@@ -23,7 +23,7 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3001"}, // Origin ที่อนุญาต
+		AllowOrigins:     []string{"http://localhost:3000"}, // Origin ที่อนุญาต
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
 		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization},
 		AllowCredentials: true, // สำคัญ! เพื่ออนุญาตการส่งคุกกี้
