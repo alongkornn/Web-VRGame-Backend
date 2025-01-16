@@ -11,7 +11,7 @@ func AdminRoute(g *echo.Group) {
 	// เพิ่มผู้ดูแลระบบ
 	adminGroup.POST("/create", controllers.CreateAdmin)
 	// แสดงผู้ดูแลระบบแค่คนเดียว
-	adminGroup.POST("/get/:adminId", controllers.GetAdminById)
+	adminGroup.GET("/:adminId", controllers.GetAdminById)
 	// แสดงผูู้ดูแลระบบทั้งหมด
 	adminGroup.POST("/get", controllers.GetAllAdmin)
 	// ผู้ดูแลระบบอนุมัติการลงทะเบียนของผู้เล่น
