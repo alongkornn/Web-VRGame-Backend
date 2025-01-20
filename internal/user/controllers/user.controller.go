@@ -22,6 +22,15 @@ func GetUserByID(ctx echo.Context) error {
 }
 
 // แสดงผู้เล่นทั้งหมด
+func GetAllPlayer(ctx echo.Context) error {
+	users, status, err := services.GetAllPlayer(ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to get User", users)
+}
+
 func GetAllUser(ctx echo.Context) error {
 	users, status, err := services.GetAllUser(ctx.Request().Context())
 	if err != nil {
