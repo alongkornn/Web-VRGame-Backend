@@ -1,6 +1,6 @@
 module github.com/alongkornn/Web-VRGame-Backend
 
-go 1.23
+go 1.22
 
 toolchain go1.23.0
 
