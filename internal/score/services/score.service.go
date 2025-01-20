@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
@@ -63,7 +64,6 @@ func GetAllScoreByCheckpointId(checkpointId string, ctx context.Context) ([]*sco
 			return nil, http.StatusInternalServerError, err
 		}
 
-
 		hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
 
 		checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
@@ -92,21 +92,23 @@ func GetAllScoreByCheckpointId(checkpointId string, ctx context.Context) ([]*sco
 }
 
 func SetScore(userId string, score int, ctx context.Context) (int, error) {
+	// ตรวจสอบว่าผู้ใช้มีอยู่ในระบบหรือไม่
 	hasUser := utils.HasUser(userId)
-
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
 		return http.StatusNotFound, errors.New("user not found")
 	}
 
+	// แปลงข้อมูลผู้ใช้
 	var user auth_models.User
 	if err := userDoc.DataTo(&user); err != nil {
 		return http.StatusInternalServerError, err
 	}
 
+	// อัปเดตคะแนนใน Firestore
 	_, err = userDoc.Ref.Update(ctx, []firestore.Update{
 		{
-			Path:  "user.score",
+			Path:  "score", // เปลี่ยนจาก "user.score" เป็น "score" หากตรงกับโครงสร้าง Firestore
 			Value: score,
 		},
 		{
@@ -117,6 +119,13 @@ func SetScore(userId string, score int, ctx context.Context) (int, error) {
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
+
+	// อัปเดตโครงสร้าง user ใน local เพื่อใช้ส่งผ่าน WebSocket
+	user.Score = score
+	user.UpdatedAt = time.Now()
+
+	// ส่งการเปลี่ยนแปลงไปยัง WebSocket clients
+	config.BroadcastToClients(&user)
 
 	return http.StatusOK, nil
 }

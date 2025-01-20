@@ -11,6 +11,7 @@ import (
 	middlewares "github.com/alongkornn/Web-VRGame-Backend/internal/middleware"
 	scoreRoute "github.com/alongkornn/Web-VRGame-Backend/internal/score/routes"
 	userRoute "github.com/alongkornn/Web-VRGame-Backend/internal/user/routes"
+	websocket_services "github.com/alongkornn/Web-VRGame-Backend/internal/websocket/services"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -19,6 +20,14 @@ func main() {
 	config.InitConfig()
 	// Firebase Config
 	config.InitFirebase()
+	// Redis Config
+	config.InitRedis()
+
+	// เริ่มต้น WebSocket Server
+	http.HandleFunc("/ws", websocket_services.HandleWebSocket)
+
+	// เริ่มต้น Firestore Listener
+	go config.ListenForUserScoreUpdates()
 
 	e := echo.New()
 

@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,35 +20,95 @@ import (
 
 // แสดงด่านปัจจุบันของผู้เล่น(โดยจะเข้าถึงผ่านไอดีของผู้เล่น)
 func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkpoint_models.Checkpoints, int, error) {
-	hasUser := utils.HasUser(userId)
+	// ใช้ฟังก์ชัน GetRedisKeys เพื่อดึงคีย์
+	userCacheKey, checkpointCacheKey := utils.GetRedisKeys(userId)
 
-	userDoc, err := hasUser.Documents(ctx).Next()
+	// 1. ตรวจสอบใน Redis ก่อน
+	cachedUser, err := config.RedisClient.Get(ctx, userCacheKey).Result()
+	if err == nil {
+		var user auth_models.User
+		if err := json.Unmarshal([]byte(cachedUser), &user); err == nil {
+			// ดึง Checkpoint จาก Redis ถ้ามี
+			cachedCheckpoint, err := config.RedisClient.Get(ctx, checkpointCacheKey).Result()
+			if err == nil {
+				var currentCheckpoint checkpoint_models.Checkpoints
+				if err := json.Unmarshal([]byte(cachedCheckpoint), &currentCheckpoint); err == nil {
+
+					return &currentCheckpoint, http.StatusOK, nil
+				}
+			}
+		}
+	}
+
+	// 2. ถ้าไม่มีใน Redis -> ไปดึงข้อมูลจาก Firestore
+	// ใช้ Query เพื่อตรวจสอบผู้ใช้ใน Firestore
+	userQuery := utils.HasUser(userId)
+	userSnapshot, err := userQuery.Documents(ctx).GetAll()
 	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error querying Firestore: %v", err)
+	}
+
+	// ตรวจสอบว่าผู้ใช้มีในฐานข้อมูลหรือไม่
+	if len(userSnapshot) == 0 {
 		return nil, http.StatusNotFound, errors.New("user not found")
 	}
 
+	// ดึงข้อมูลผู้ใช้จาก snapshot
 	var user auth_models.User
-	if err := userDoc.DataTo(&user); err != nil {
-		return nil, http.StatusInternalServerError, err
+	if err := userSnapshot[0].DataTo(&user); err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error unmarshaling user data: %v", err)
 	}
 
-	hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
+	// ตรวจสอบว่าผู้ใช้มี current checkpoint หรือไม่
+	if user.CurrentCheckpoint == "" {
+		return nil, http.StatusBadRequest, errors.New("user has no current checkpoint")
+	}
 
-	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
+	// ดึง DocumentRef สำหรับ checkpoint จาก user.CurrentCheckpoint
+	checkpointQuery := config.DB.Collection("Checkpoint").Where("id", "==", user.CurrentCheckpoint)
+
+	// ดึงข้อมูลจาก DocumentRef ของ checkpoint
+	checkpointSnapshot, err := checkpointQuery.Documents(ctx).GetAll()
 	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error getting checkpoint: %v", err)
+	}
+
+	// ตรวจสอบว่าด่านใช้มีในฐานข้อมูลหรือไม่
+	if len(checkpointSnapshot) == 0 {
 		return nil, http.StatusNotFound, errors.New("checkpoint not found")
 	}
 
 	var currentCheckpoint checkpoint_models.Checkpoints
-	if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
-		return nil, http.StatusInternalServerError, err
+	if err := checkpointSnapshot[0].DataTo(&currentCheckpoint); err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error unmarshaling checkpoint data: %v", err)
 	}
+
+	// 3. เก็บข้อมูลลง Redis
+	userData, _ := json.Marshal(user)
+	config.RedisClient.Set(ctx, userCacheKey, userData, 10*time.Minute)
+
+	checkpointData, _ := json.Marshal(currentCheckpoint)
+	config.RedisClient.Set(ctx, checkpointCacheKey, checkpointData, 10*time.Minute)
 
 	return &currentCheckpoint, http.StatusOK, nil
 }
 
 // แสดงด่านทั้งหมดทุกหมวดหมู่
 func GetAllCheckpoint(ctx context.Context) ([]*checkpoint_models.Checkpoints, int, error) {
+	// สร้าง key สำหรับ Redis
+	cacheKey := "checkpoints:all"
+
+	// 1. ตรวจสอบข้อมูลใน Redis ก่อน
+	cachedData, err := config.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil && cachedData != "" {
+		// ถ้ามีข้อมูลใน Redis แปลง JSON เป็น struct
+		var checkpoints []*checkpoint_models.Checkpoints
+		if err := json.Unmarshal([]byte(cachedData), &checkpoints); err == nil {
+			return checkpoints, http.StatusOK, nil
+		}
+	}
+
+	// 2. ถ้าไม่มีข้อมูลใน Redis -> ดึงข้อมูลจาก Firestore
 	iter := config.DB.Collection("Checkpoint").
 		Where("is_deleted", "==", false).
 		Documents(ctx)
@@ -73,6 +135,16 @@ func GetAllCheckpoint(ctx context.Context) ([]*checkpoint_models.Checkpoints, in
 
 		checkpoints = append(checkpoints, &checkpoint)
 	}
+
+	// 3. เก็บข้อมูลลง Redis
+	if len(checkpoints) > 0 {
+		data, err := json.Marshal(checkpoints)
+		if err == nil {
+			// ตั้งค่าความหมดอายุ (เช่น 10 นาที)
+			config.RedisClient.Set(ctx, cacheKey, data, 10*time.Minute)
+		}
+	}
+
 	return checkpoints, http.StatusOK, nil
 }
 

@@ -10,5 +10,5 @@ func ScoreRoute(e *echo.Group) {
 
 	scoreGroup.POST("/get/score/:userId", controllers.GetScoreByUserId)
 	scoreGroup.POST("/get/score/:checkpointId", controllers.GetAllScoreByCheckpointId)
-	scoreGroup.POST("/set/score/:userId", controllers.SetScore)
-} 
+	scoreGroup.POST("/set/:userId", controllers.SetScore)
+}
