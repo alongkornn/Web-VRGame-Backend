@@ -61,7 +61,7 @@ func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, string, e
 		CurrentCheckpoint:    currentCheckpoint.ID,
 		CompletedCheckpoints: nil,
 		Role:                 auth_models.Player,
-		Status:               auth_models.Pending,
+		Status:               "pending",
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
 		VerifyEmail:          false,

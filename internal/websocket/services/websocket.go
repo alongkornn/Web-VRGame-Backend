@@ -1,4 +1,4 @@
-package services
+package websocket_services
 
 import (
 	"log"
@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/labstack/echo/v4"
 )
 
 // ตัวแปลง WebSocket Connection
@@ -15,14 +16,16 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// Clients map ที่เก็บ WebSocket connections
 var Clients = make(map[*websocket.Conn]bool)
 var Mutex = &sync.Mutex{}
 
-func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+// HandleWebSocket ใช้กับ Echo
+func HandleWebSocket(c echo.Context) error {
+	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		log.Println("Failed to upgrade to WebSocket:", err)
-		return
+		return err
 	}
 	defer conn.Close()
 
@@ -37,4 +40,13 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		delete(Clients, conn)
 		Mutex.Unlock()
 	}()
+
+	// รอรับข้อความจาก WebSocket
+	for {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Failed to read message:", err)
+			return err
+		}
+	}
 }

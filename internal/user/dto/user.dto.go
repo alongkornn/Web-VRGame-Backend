@@ -6,3 +6,7 @@ type UpdateUserDTO struct {
 	Class     string `json:"class"`
 	Number    string `json:"number"`
 }
+
+type UpdateStatusPlayer struct {
+	Status string `json:"status"`
+}

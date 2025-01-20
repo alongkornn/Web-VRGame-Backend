@@ -98,3 +98,19 @@ func GetUserBySortScore(ctx echo.Context) error {
 
 	return utils.SendSuccess(ctx, status, "Successfully to fetch User", users)
 }
+
+func UpdateStatusPlayer(ctx echo.Context) error {
+	id := ctx.Param("id")
+
+	var updateStatusDTO dto.UpdateStatusPlayer
+	if err := ctx.Bind(&updateStatusDTO); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
+	}
+
+	status, err := services.UpdateStatusPlayer(id, updateStatusDTO.Status, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, "Fail to update status", nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to update status", nil)
+}

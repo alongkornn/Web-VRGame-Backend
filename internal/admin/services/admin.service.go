@@ -22,7 +22,7 @@ import (
 func AddminApprovedUserRegister(userId string, approved auth_models.Status, ctx context.Context) (int, error) {
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", auth_models.Pending).
+		Where("status", "==", "pending").
 		Where("id", "==", userId).
 		Limit(1)
 
@@ -40,7 +40,7 @@ func AddminApprovedUserRegister(userId string, approved auth_models.Status, ctx 
 	_, err = userDoc.Ref.Update(ctx, []firestore.Update{
 		{
 			Path:  "status",
-			Value: auth_models.Approved,
+			Value: "approved",
 		},
 		{
 			Path:  "updated_at",
@@ -78,7 +78,7 @@ func AdminRemoveUser(userId string, ctx context.Context) (int, error) {
 		},
 		{
 			Path:  "status",
-			Value: auth_models.Deleted,
+			Value: "deleted",
 		},
 	})
 	if err != nil {
@@ -127,7 +127,7 @@ func GetAllAdmin(ctx context.Context) ([]*auth_models.User, int, error) {
 	iter := config.DB.Collection("User").
 		Where("role", "==", auth_models.Admin).
 		Where("is_deleted", "==", false).
-		Where("status", "==", auth_models.Approved).
+		Where("status", "==", "approved").
 		Documents(ctx)
 
 	defer iter.Stop()

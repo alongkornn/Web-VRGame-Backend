@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
+	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/user/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
@@ -69,7 +70,7 @@ func GetAllPlayer(ctx context.Context) ([]*auth_models.User, int, error) {
 	// 2. ถ้าไม่มีข้อมูลใน Redis -> ดึงข้อมูลจาก Firestore
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", auth_models.Approved).
+		Where("status", "==", "approved").
 		Where("role", "==", auth_models.Player).
 		Documents(ctx)
 
@@ -124,7 +125,7 @@ func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
 	// 2. ถ้าไม่มีข้อมูลใน Redis -> ดึงข้อมูลจาก Firestore
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", auth_models.Approved).
+		Where("status", "==", "approved").
 		Documents(ctx)
 
 	defer iter.Stop()
@@ -179,7 +180,7 @@ func GetUserPending(ctx context.Context) ([]*auth_models.User, int, error) {
 	// 2. ถ้าไม่มีข้อมูลใน Redis -> ดึงข้อมูลจาก Firestore
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", auth_models.Pending).
+		Where("status", "==", "pending").
 		Documents(ctx)
 
 	defer iter.Stop()
@@ -319,7 +320,7 @@ func SetSumScore(userId string, ctx context.Context) (int, error) {
 
 func GetUserBySortScore(ctx context.Context) ([]*auth_models.User, int, error) {
 	iter := config.DB.Collection("User").Where("is_deleted", "==", false).
-		Where("status", "==", auth_models.Approved).
+		Where("status", "==", "approved").
 		Where("role", "==", auth_models.Player).
 		OrderBy("score", firestore.Desc).
 		Documents(ctx)
@@ -347,4 +348,52 @@ func GetUserBySortScore(ctx context.Context) ([]*auth_models.User, int, error) {
 	}
 
 	return users, http.StatusOK, nil
+}
+
+func UpdateStatusPlayer(id string, status string, ctx context.Context) (int, error) {
+
+	// ค้นหาผู้เล่นที่ต้องการอัปเดต
+	hasUser := config.DB.Collection("User").
+		Where("is_deleted", "==", false).
+		Where("role", "==", models.Player).
+		Where("id", "==", id).
+		Limit(1)
+
+	userDocs, err := hasUser.Documents(ctx).GetAll()
+	if err != nil || len(userDocs) == 0 {
+		return http.StatusBadRequest, errors.New("user not found")
+	}
+
+	var user models.User
+	if err := userDocs[0].DataTo(&user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	// อัปเดตสถานะใน Firestore
+	_, err = userDocs[0].Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "status",
+			Value: status,
+		},
+		{
+			Path:  "updated_at",
+			Value: firestore.ServerTimestamp,
+		},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	// อัปเดตข้อมูลใน Redis
+	redisKey := fmt.Sprintf("user:%s", id) // ใช้ key แบบ user:id
+	err = config.RedisClient.Set(ctx, redisKey, status, 0).Err()
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to update status in Redis")
+	}
+
+	// Broadcast ข้อมูลที่อัปเดตไปยัง WebSocket
+	user.Status = status // อัปเดตสถานะผู้เล่นในตัวแปร user
+	config.BroadcastToClients(&user)
+
+	return http.StatusOK, nil
 }

@@ -39,9 +39,7 @@ func InitFirebase() {
 func ListenForUserScoreUpdates() {
 	ctx := context.Background()
 	query := DB.Collection("User").
-		Where("is_deleted", "==", false).
-		Where("status", "==", "approved").
-		Where("role", "==", "player")
+		Where("is_deleted", "==", false)
 
 	snapshotIterator := query.Snapshots(ctx)
 	defer snapshotIterator.Stop()

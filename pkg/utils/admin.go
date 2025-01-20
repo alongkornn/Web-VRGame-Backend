@@ -10,9 +10,9 @@ func HasAdmin(adminId string) firestore.Query {
 	hasAdmin := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
 		Where("role", "==", models.Admin).
-		Where("status", "==", models.Approved).
+		Where("status", "==", "approved").
 		Where("id", "==", adminId).
 		Limit(1)
-	
+
 	return hasAdmin
 }

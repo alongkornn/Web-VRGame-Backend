@@ -15,6 +15,8 @@ func UserRoute(e *echo.Group) {
 	// แสดงผู้เล่นทั้งหมด
 	userGroup.GET("/player", controllers.GetAllPlayer)
 
+	userGroup.PUT("/status", controllers.UpdateStatusPlayer)
+
 	userGroup.GET("", controllers.GetAllUser)
 	// แสดงผู้เล่นที่ยังไม่ได้รับการอนุมัติ
 	userGroup.GET("/pending", controllers.GetUserPending)

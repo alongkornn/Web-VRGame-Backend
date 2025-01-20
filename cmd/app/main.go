@@ -23,12 +23,6 @@ func main() {
 	// Redis Config
 	config.InitRedis()
 
-	// เริ่มต้น WebSocket Server
-	http.HandleFunc("/ws", websocket_services.HandleWebSocket)
-
-	// เริ่มต้น Firestore Listener
-	go config.ListenForUserScoreUpdates()
-
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -61,6 +55,12 @@ func main() {
 	adminRoute.AdminRoute(globalGroup)
 	checkpointRoute.CheckpointRoute(globalGroup)
 	userRoute.UserRoute(globalGroup)
+
+	// เริ่มต้น WebSocket Server
+	e.Any("/ws", websocket_services.HandleWebSocket)
+
+	// เริ่มต้น Firestore Listener
+	go config.ListenForUserScoreUpdates()
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))

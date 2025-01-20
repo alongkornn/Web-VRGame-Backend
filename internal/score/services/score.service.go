@@ -40,7 +40,7 @@ func GetAllScoreByCheckpointId(checkpointId string, ctx context.Context) ([]*sco
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
 		Where("role", "==", auth_models.Player).
-		Where("status", "==", auth_models.Approved).
+		Where("status", "==", "approved").
 		Documents(ctx)
 
 	defer iter.Stop()
