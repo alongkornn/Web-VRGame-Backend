@@ -109,7 +109,7 @@ func UpdateStatusPlayer(ctx echo.Context) error {
 
 	status, err := services.UpdateStatusPlayer(id, updateStatusDTO.Status, ctx.Request().Context())
 	if err != nil {
-		return utils.SendError(ctx, status, "Fail to update status", nil)
+		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 
 	return utils.SendSuccess(ctx, status, "Successfully to update status", nil)

@@ -11,11 +11,11 @@ func UserRoute(e *echo.Group) {
 	userGroup := e.Group("/user")
 
 	// แสดงผู้เล่นแค่คนเดียว
-	userGroup.GET("/:userId", controllers.GetUserByID, middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
+	userGroup.GET("/:userId", controllers.GetUserByID)
 	// แสดงผู้เล่นทั้งหมด
 	userGroup.GET("/player", controllers.GetAllPlayer)
 
-	userGroup.PUT("/status", controllers.UpdateStatusPlayer)
+	userGroup.PUT("/status/:id", controllers.UpdateStatusPlayer)
 
 	userGroup.GET("", controllers.GetAllUser)
 	// แสดงผู้เล่นที่ยังไม่ได้รับการอนุมัติ

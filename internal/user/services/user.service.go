@@ -10,7 +10,6 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
-	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/user/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
@@ -70,7 +69,6 @@ func GetAllPlayer(ctx context.Context) ([]*auth_models.User, int, error) {
 	// 2. ถ้าไม่มีข้อมูลใน Redis -> ดึงข้อมูลจาก Firestore
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("status", "==", "approved").
 		Where("role", "==", auth_models.Player).
 		Documents(ctx)
 
@@ -355,16 +353,16 @@ func UpdateStatusPlayer(id string, status string, ctx context.Context) (int, err
 	// ค้นหาผู้เล่นที่ต้องการอัปเดต
 	hasUser := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
-		Where("role", "==", models.Player).
+		Where("role", "==", auth_models.Player).
 		Where("id", "==", id).
 		Limit(1)
 
 	userDocs, err := hasUser.Documents(ctx).GetAll()
 	if err != nil || len(userDocs) == 0 {
-		return http.StatusBadRequest, errors.New("user not found")
+		return http.StatusBadRequest, err
 	}
 
-	var user models.User
+	var user auth_models.User
 	if err := userDocs[0].DataTo(&user); err != nil {
 		return http.StatusInternalServerError, err
 	}
