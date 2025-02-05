@@ -25,3 +25,7 @@ type GetCheckpointWithCategoryDTO struct {
 type SetTimeDTO struct {
 	Time time.Duration `json:"time"`
 }
+
+type SetScoreDTO struct {
+	Score int `json:"score"`
+}

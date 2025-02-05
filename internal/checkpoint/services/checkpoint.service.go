@@ -204,10 +204,20 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 	}
 
 	if score >= currentCheckpoint.PassScore && score <= currentCheckpoint.MaxScore {
+		// ดึง completed_checkpoints ที่มีอยู่
+		var completedCheckpoints []*checkpoint_models.CompleteCheckpoint
+
+		if user.CompletedCheckpoints != nil {
+			completedCheckpoints = user.CompletedCheckpoints
+		}
+
+		// เพิ่ม checkpoint ใหม่เข้าไป
+		completedCheckpoints = append(completedCheckpoints, &completeCheckpoint)
+
 		_, err := userDoc.Ref.Update(ctx, []firestore.Update{
 			{
 				Path:  "completed_checkpoints",
-				Value: completeCheckpoint,
+				Value: completedCheckpoints, // อัปเดตเป็น array ใหม่
 			},
 			{
 				Path:  "updated_at",
@@ -222,6 +232,7 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 			return http.StatusInternalServerError, err
 		}
 	}
+
 	return http.StatusOK, nil
 }
 

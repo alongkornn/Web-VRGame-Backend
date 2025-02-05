@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/dto"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/services"
@@ -36,7 +35,7 @@ func GetAllCheckpoint(ctx echo.Context) error {
 func CreateCheckpoint(ctx echo.Context) error {
 	var checkpointDTO dto.CreateCheckpointsDTO
 	if err := ctx.Bind(&checkpointDTO); err != nil {
-		return utils.SendError(ctx, http.StatusBadRequest, "Invalid inpout", nil)
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
 	}
 
 	status, err := services.CreateCheckpoint(checkpointDTO, ctx.Request().Context())
@@ -50,18 +49,13 @@ func CreateCheckpoint(ctx echo.Context) error {
 // บันทึกด่านปัจจุบันลงในด่านที่เล่นผ่านแล้วโดยจะตรวจสอบว่าคะแนนผ่านเกณฑ์หรือยัง
 func SaveCheckpointToComplete(ctx echo.Context) error {
 	id := ctx.Param("userId")
-	scoreStr := ctx.Param("score")
 
-	// แปลงค่า scoreStr จาก string เป็น int
-	score, err := strconv.Atoi(scoreStr)
-	if err != nil {
-		// ถ้าไม่สามารถแปลงได้ให้คืนค่า error
-		return ctx.JSON(400, map[string]string{
-			"error": "Invalid score parameter",
-		})
+	var scoreDTO dto.SetScoreDTO
+	if err := ctx.Bind(&scoreDTO); err != nil {
+		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
 	}
 
-	status, err := services.SaveCheckpointToComplete(id, score, ctx.Request().Context())
+	status, err := services.SaveCheckpointToComplete(id, scoreDTO.Score, ctx.Request().Context())
 	if err != nil {
 		return utils.SendError(ctx, status, err.Error(), nil)
 	}
