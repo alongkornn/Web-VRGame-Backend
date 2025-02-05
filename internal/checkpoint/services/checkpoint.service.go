@@ -198,38 +198,40 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 		return http.StatusInternalServerError, err
 	}
 
-	// สร้างข้อมูล checkpoint ที่ผ่านแล้ว
-	completeCheckpoint := map[string]interface{}{
-		"CheckpointID": currentCheckpoint.ID,
-		"Name":         currentCheckpoint.Name,
-		"Category":     currentCheckpoint.Category,
-		"Score":        score,
+	// ✅ ใช้ struct โดยตรงแทน map[string]interface{}
+	completeCheckpoint := &checkpoint_models.CompleteCheckpoint{
+		CheckpointID: currentCheckpoint.ID,
+		Name:         currentCheckpoint.Name,
+		Category:     currentCheckpoint.Category,
+		Score:        score,
 	}
 
 	// ตรวจสอบว่าผู้ใช้ผ่าน checkpoint หรือไม่
 	if score >= currentCheckpoint.PassScore && score <= currentCheckpoint.MaxScore {
-		var completedCheckpoints []map[string]interface{}
+		var completedCheckpoints []*checkpoint_models.CompleteCheckpoint
 
 		// ถ้ามี completedCheckpoints อยู่แล้ว ให้นำมาใส่ใน slice
 		if user.CompletedCheckpoints != nil {
-			for _, checkpoint := range user.CompletedCheckpoints {
-				completedCheckpoints = append(completedCheckpoints, map[string]interface{}{
-					"CheckpointID": checkpoint.CheckpointID,
-					"Name":         checkpoint.Name,
-					"Category":     checkpoint.Category,
-					"Score":        checkpoint.Score,
-				})
-			}
+			completedCheckpoints = append(completedCheckpoints, user.CompletedCheckpoints...)
 		}
 
-		// เพิ่ม checkpoint ใหม่เข้าไป
 		completedCheckpoints = append(completedCheckpoints, completeCheckpoint)
+
+		var firestoreCheckpoints []map[string]interface{}
+		for _, c := range completedCheckpoints {
+			firestoreCheckpoints = append(firestoreCheckpoints, map[string]interface{}{
+				"CheckpointID": c.CheckpointID,
+				"Name":         c.Name,
+				"Category":     c.Category,
+				"Score":        c.Score,
+			})
+		}
 
 		// อัปเดต Firestore
 		_, err := userDoc.Ref.Update(ctx, []firestore.Update{
 			{
 				Path:  "completed_checkpoints",
-				Value: completedCheckpoints, // ✅ ใช้ `[]map[string]interface{}` แทน
+				Value: firestoreCheckpoints,
 			},
 			{
 				Path:  "updated_at",
@@ -239,6 +241,17 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}
+
+		user.CompletedCheckpoints = completedCheckpoints
+
+		redisKey := fmt.Sprintf("user:%s", userID) // Key สำหรับ Redis
+		userData, _ := json.Marshal(user)
+		err = config.RedisClient.Set(ctx, redisKey, userData, 0).Err()
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("failed to update status in Redis")
+		}
+
+		config.BroadcastToClients(&user)
 	}
 
 	return http.StatusOK, nil
