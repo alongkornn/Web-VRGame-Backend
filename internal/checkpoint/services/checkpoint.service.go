@@ -198,6 +198,8 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 
 	completeCheckpoint := checkpoint_models.CompleteCheckpoint{
 		CheckpointID: currentCheckpoint.ID,
+		Name:         currentCheckpoint.Name,
+		Category:     currentCheckpoint.Category,
 		Score:        score,
 	}
 

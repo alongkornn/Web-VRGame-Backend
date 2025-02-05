@@ -25,8 +25,10 @@ type Checkpoints struct {
 }
 
 type CompleteCheckpoint struct {
-	CheckpointID string `json:"checkpoint_id" firestore:"checkpoint_id"`
-	Score        int    `json:"score" firestore:"score"`
+	CheckpointID string   `json:"checkpoint_id" firestore:"checkpoint_id"`
+	Name         string   `json:"name" firestore:"name"`
+	Category     Category `json:"category" firestore:"category"`
+	Score        int      `json:"score" firestore:"score"`
 }
 
 type CheckpointDetail struct {
