@@ -172,52 +172,64 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 
 // บันทึกด่านปัจจุบันลงในด่านที่เล่นผ่านแล้วโดยจะตรวจสอบว่าคะแนนผ่านเกณฑ์หรือยัง
 func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (int, error) {
+	// ตรวจสอบว่ามีผู้ใช้หรือไม่
 	hasUser := utils.HasUser(userID)
-
 	userDoc, err := hasUser.Documents(ctx).Next()
 	if err != nil {
 		return http.StatusNotFound, errors.New("user not found")
 	}
 
+	// แปลงข้อมูลผู้ใช้จาก Firestore
 	var user auth_models.User
 	if err := userDoc.DataTo(&user); err != nil {
 		return http.StatusInternalServerError, err
 	}
 
+	// ตรวจสอบว่ามี Checkpoint ปัจจุบันหรือไม่
 	hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
-
 	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
 	if err != nil {
 		return http.StatusNotFound, errors.New("checkpoint not found")
 	}
 
+	// แปลงข้อมูล Checkpoint
 	var currentCheckpoint checkpoint_models.Checkpoints
 	if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
 		return http.StatusInternalServerError, err
 	}
 
-	completeCheckpoint := checkpoint_models.CompleteCheckpoint{
-		CheckpointID: currentCheckpoint.ID,
-		Name:         currentCheckpoint.Name,
-		Category:     currentCheckpoint.Category,
-		Score:        score,
+	// สร้างข้อมูล checkpoint ที่ผ่านแล้ว
+	completeCheckpoint := map[string]interface{}{
+		"CheckpointID": currentCheckpoint.ID,
+		"Name":         currentCheckpoint.Name,
+		"Category":     currentCheckpoint.Category,
+		"Score":        score,
 	}
 
+	// ตรวจสอบว่าผู้ใช้ผ่าน checkpoint หรือไม่
 	if score >= currentCheckpoint.PassScore && score <= currentCheckpoint.MaxScore {
-		// ดึง completed_checkpoints ที่มีอยู่
-		var completedCheckpoints []*checkpoint_models.CompleteCheckpoint
+		var completedCheckpoints []map[string]interface{}
 
+		// ถ้ามี completedCheckpoints อยู่แล้ว ให้นำมาใส่ใน slice
 		if user.CompletedCheckpoints != nil {
-			completedCheckpoints = user.CompletedCheckpoints
+			for _, checkpoint := range user.CompletedCheckpoints {
+				completedCheckpoints = append(completedCheckpoints, map[string]interface{}{
+					"CheckpointID": checkpoint.CheckpointID,
+					"Name":         checkpoint.Name,
+					"Category":     checkpoint.Category,
+					"Score":        checkpoint.Score,
+				})
+			}
 		}
 
 		// เพิ่ม checkpoint ใหม่เข้าไป
-		completedCheckpoints = append(completedCheckpoints, &completeCheckpoint)
+		completedCheckpoints = append(completedCheckpoints, completeCheckpoint)
 
+		// อัปเดต Firestore
 		_, err := userDoc.Ref.Update(ctx, []firestore.Update{
 			{
 				Path:  "completed_checkpoints",
-				Value: completedCheckpoints, // อัปเดตเป็น array ใหม่
+				Value: completedCheckpoints, // ✅ ใช้ `[]map[string]interface{}` แทน
 			},
 			{
 				Path:  "updated_at",
