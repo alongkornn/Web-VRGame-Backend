@@ -223,10 +223,6 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 				Path:  "updated_at",
 				Value: firestore.ServerTimestamp,
 			},
-			{
-				Path:  "current_checkpoint",
-				Value: nil,
-			},
 		})
 		if err != nil {
 			return http.StatusInternalServerError, err
