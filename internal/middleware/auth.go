@@ -7,12 +7,12 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-// JWTMiddleware ตรวจสอบว่า JWT token ถูกต้องและ decode เพื่อใช้ข้อมูลข้างใน token
-func JWTMiddlewareWithCookie(secretKey string) echo.MiddlewareFunc {
+func JWTMiddleware(secretKey string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey:  []byte(secretKey),
-		TokenLookup: "cookie:token", // ดึง token จาก cookie ชื่อ "token"
-		ContextKey:  "user",         // บันทึกข้อมูลผู้ใช้ใน Context Key ชื่อ "user"
+		TokenLookup: "header:Authorization,cookie:token", // รองรับทั้ง Header และ Cookie
+		AuthScheme:  "Bearer",
+		ContextKey:  "user",
 	})
 }
 

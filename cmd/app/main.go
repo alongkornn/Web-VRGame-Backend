@@ -43,7 +43,7 @@ func main() {
 
 	// ตรวจสอบว่า token ถูกต้องหรือไม่
 	protectRoute := e.Group("/api")
-	protectRoute.Use(middlewares.JWTMiddlewareWithCookie((config.GetEnv("jwt.secret_key"))))
+	protectRoute.Use(middlewares.JWTMiddleware((config.GetEnv("jwt.secret_key"))))
 	protectRoute.GET("/protected", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"message": "You are authorized",
@@ -60,7 +60,7 @@ func main() {
 	e.Any("/ws", websocket_services.HandleWebSocket)
 
 	// เริ่มต้น Firestore Listener
-	go config.ListenForUserScoreUpdates()
+	go config.ListenForUserScoreUpdate()
 
 	port := config.GetEnv("app.port")
 	e.Logger.Fatal(e.Start(":" + port))
