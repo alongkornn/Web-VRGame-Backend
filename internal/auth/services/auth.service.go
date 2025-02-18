@@ -4,15 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/firestore"
+	// "cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
 	"github.com/alongkornn/Web-VRGame-Backend/internal/auth/dto"
 	auth_models "github.com/alongkornn/Web-VRGame-Backend/internal/auth/models"
-	checkpoin_models "github.com/alongkornn/Web-VRGame-Backend/internal/checkpoint/models"
-	"github.com/alongkornn/Web-VRGame-Backend/pkg/utils"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -20,66 +19,71 @@ import (
 )
 
 // ลงทะเบียน
-func Register(ctx context.Context, registerDTO *dto.RegisterDTO) (int, string, error) {
+func Register(ctx context.Context, registerDTO dto.RegisterDTO) (int, error) {
+	// ตรวจสอบว่า Firestore ถูก initialize แล้ว
+	if config.DB == nil {
+		return http.StatusInternalServerError, errors.New("firestore client not initialized")
+	}
+
+	// ตรวจสอบว่าอีเมลมีอยู่แล้วหรือไม่
 	hasUser := config.DB.Collection("User").
 		Where("email", "==", registerDTO.Email).
 		Limit(1)
-
 	userDoc, err := hasUser.Documents(ctx).GetAll()
 	if err != nil {
-		return http.StatusInternalServerError, "", errors.New("error checking user existence")
+		return http.StatusInternalServerError, errors.New("error checking user existence")
 	}
-
 	if len(userDoc) > 0 {
-		return http.StatusConflict, "", errors.New("email already registered")
+		return http.StatusConflict, errors.New("email already registered")
 	}
 
+	// เข้ารหัสรหัสผ่าน
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(registerDTO.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return http.StatusBadRequest, "", errors.New("hash password is error")
+		return http.StatusBadRequest, errors.New("hash password is error")
 	}
 
-	hasCheckpoint := utils.GetCheckpointID("ด่านหนึ่ง")
-
-	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
-	if err != nil {
-		return http.StatusNotFound, "", errors.New("checkpoint not found")
-	}
-
-	var currentCheckpoint checkpoin_models.Checkpoints
-	if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
-		return http.StatusInternalServerError, "", err
-	}
+	// สร้างข้อมูลผู้ใช้
+	userID := uuid.New().String()
+	currentTime := time.Now()
 
 	user := auth_models.User{
-		ID:                   uuid.New().String(),
+		ID:                   userID,
 		FirstName:            registerDTO.FirstName,
 		LastName:             registerDTO.LastName,
 		Email:                registerDTO.Email,
 		Password:             string(hashPassword),
 		Score:                0,
-		CurrentCheckpoint:    currentCheckpoint.ID,
+		CurrentCheckpoint:    "283dd16a-a0ed-436d-a017-49689c5c9604",
 		CompletedCheckpoints: nil,
 		Role:                 auth_models.Player,
 		Status:               "pending",
-		CreatedAt:            time.Now(),
-		UpdatedAt:            time.Now(),
+		CreatedAt:            currentTime,
+		UpdatedAt:            currentTime,
 		VerifyEmail:          false,
 		Is_Deleted:           false,
 	}
 
+	// บันทึกลง Firestore
 	_, _, err = config.DB.Collection("User").Add(ctx, user)
 	if err != nil {
 		fmt.Printf("Error adding document: %v\n", err)
-		return http.StatusInternalServerError, "", errors.New("failed to register user")
+		return http.StatusInternalServerError, errors.New("failed to register user")
 	}
 
-	token, err := generateEmailVerificationToken(user.ID)
+	// ใช้ฟังก์ชัน AddToRealtimeDB() แทนการเรียก API ตรงๆ
+	err = config.AddToRealtimeDB(userID, map[string]interface{}{
+		"currentCheckpoint": "283dd16a-a0ed-436d-a017-49689c5c9604",
+		"score":             0,
+		"status":            "pending",
+		"time":              "",
+	})
 	if err != nil {
-		return http.StatusInternalServerError, "", errors.New("failed to generate token")
+		log.Printf("Failed to register user in Realtime Database: %v\n", err)
+		return http.StatusInternalServerError, fmt.Errorf("failed to register user in Realtime Database: %v", err)
 	}
 
-	return http.StatusOK, token, nil
+	return http.StatusOK, nil
 }
 
 // เข้าสู่ระบบ
@@ -163,45 +167,45 @@ func sendEmail(to, link string) error {
 }
 
 // ฟังก์ชันการสร้างโทเค็น
-func generateEmailVerificationToken(userID string) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour) // โทเค็นจะหมดอายุภายใน 24 ชั่วโมง
-	claims := &jwt.StandardClaims{
-		Issuer:    userID,                // userID ของผู้ใช้
-		ExpiresAt: expirationTime.Unix(), // วันหมดอายุ
-	}
+// func generateEmailVerificationToken(userID string) (string, error) {
+// 	expirationTime := time.Now().Add(24 * time.Hour) // โทเค็นจะหมดอายุภายใน 24 ชั่วโมง
+// 	claims := &jwt.StandardClaims{
+// 		Issuer:    userID,                // userID ของผู้ใช้
+// 		ExpiresAt: expirationTime.Unix(), // วันหมดอายุ
+// 	}
 
-	// สร้าง JWT
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(config.GetEnv("jwt.secret_key"))) // ลายเซ็นสำหรับโทเค็น
-	if err != nil {
-		return "", fmt.Errorf("could not create token: %v", err)
-	}
+// 	// สร้าง JWT
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+// 	tokenString, err := token.SignedString([]byte(config.GetEnv("jwt.secret_key"))) // ลายเซ็นสำหรับโทเค็น
+// 	if err != nil {
+// 		return "", fmt.Errorf("could not create token: %v", err)
+// 	}
 
-	return tokenString, nil
-}
+// 	return tokenString, nil
+// }
 
-func VerifyEmail(ctx context.Context, token string) (int, error) {
-	// ตรวจสอบโทเค็นจาก URL
-	claims := &jwt.StandardClaims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.GetEnv("jwt.secret_key")), nil
-	})
+// func VerifyEmail(ctx context.Context, token string) (int, error) {
+// 	// ตรวจสอบโทเค็นจาก URL
+// 	claims := &jwt.StandardClaims{}
+// 	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+// 		return []byte(config.GetEnv("jwt.secret_key")), nil
+// 	})
 
-	if err != nil {
-		return http.StatusBadRequest, fmt.Errorf("invalid or expired token")
-	}
+// 	if err != nil {
+// 		return http.StatusBadRequest, fmt.Errorf("invalid or expired token")
+// 	}
 
-	// userID จากโทเค็น
-	userID := claims.Issuer
+// 	// userID จากโทเค็น
+// 	userID := claims.Issuer
 
-	// อัปเดตฟิลด์ verifyEmail เป็น true ใน Firestore
-	userRef := config.DB.Collection("User").Doc(userID)
-	_, err = userRef.Update(ctx, []firestore.Update{
-		{Path: "VerifyEmail", Value: true},
-	})
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("failed to update email verification status in Firestore: %v", err)
-	}
+// 	// อัปเดตฟิลด์ verifyEmail เป็น true ใน Firestore
+// 	userRef := config.DB.Collection("User").Doc(userID)
+// 	_, err = userRef.Update(ctx, []firestore.Update{
+// 		{Path: "VerifyEmail", Value: true},
+// 	})
+// 	if err != nil {
+// 		return http.StatusInternalServerError, fmt.Errorf("failed to update email verification status in Firestore: %v", err)
+// 	}
 
-	return http.StatusOK, nil
-}
+// 	return http.StatusOK, nil
+// }

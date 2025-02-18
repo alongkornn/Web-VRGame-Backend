@@ -18,15 +18,11 @@ func Register(ctx echo.Context) error {
 		return utils.SendError(ctx, http.StatusBadRequest, "Invalid input", nil)
 	}
 
-	status, token, err := services.Register(ctx.Request().Context(), &registerDTO)
+	status, err := services.Register(ctx.Request().Context(), registerDTO)
 	if err != nil {
-		return utils.SendError(ctx, status, "Failed to create User", nil)
+		return utils.SendError(ctx, status, err.Error(), nil)
 	}
 
-	status, err = services.SendVerificationEmail(ctx.Request().Context(), registerDTO.Email, token)
-	if err != nil {
-		return utils.SendError(ctx, status, "Failed to send verification email", nil)
-	}
 	return utils.SendSuccess(ctx, status, "Created User Successfully", nil)
 }
 
@@ -56,16 +52,16 @@ func Login(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to Login", token)
 }
 
-func VerifyEmail(ctx echo.Context) error {
-	// รับโทเค็นจาก URL
-	token := ctx.QueryParam("token")
+// func VerifyEmail(ctx echo.Context) error {
+// 	// รับโทเค็นจาก URL
+// 	token := ctx.QueryParam("token")
 
-	// เรียกใช้ฟังก์ชัน VerifyEmail เพื่อตรวจสอบโทเค็นและอัปเดตสถานะการยืนยัน
-	status, err := services.VerifyEmail(ctx.Request().Context(), token)
-	if err != nil {
-		return utils.SendError(ctx, status, "Failed to verify email", err.Error())
-	}
+// 	// เรียกใช้ฟังก์ชัน VerifyEmail เพื่อตรวจสอบโทเค็นและอัปเดตสถานะการยืนยัน
+// 	status, err := services.VerifyEmail(ctx.Request().Context(), token)
+// 	if err != nil {
+// 		return utils.SendError(ctx, status, "Failed to verify email", err.Error())
+// 	}
 
-	// ส่งข้อความแจ้งผู้ใช้ว่าอีเมลยืนยันสำเร็จ
-	return utils.SendSuccess(ctx, http.StatusOK, "Email verified successfully", nil)
-}
+// 	// ส่งข้อความแจ้งผู้ใช้ว่าอีเมลยืนยันสำเร็จ
+// 	return utils.SendSuccess(ctx, http.StatusOK, "Email verified successfully", nil)
+// }

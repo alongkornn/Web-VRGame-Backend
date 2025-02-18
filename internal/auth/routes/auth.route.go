@@ -16,6 +16,6 @@ func AuthRoute(g *echo.Group) {
 	// protectedGroup := g.Group("")
 	// protectedGroup.Use(middleware.JWTMiddleware(config.GetEnv("jwt.secret_key")))
 
-	authGroup.GET("/verify-email", controllers.VerifyEmail)
+	// authGroup.GET("/verify-email", controllers.VerifyEmail)
 
 }

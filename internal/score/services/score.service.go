@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -105,27 +106,50 @@ func SetScore(userId string, score int, ctx context.Context) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	// อัปเดตคะแนนใน Firestore
-	_, err = userDoc.Ref.Update(ctx, []firestore.Update{
-		{
-			Path:  "score", // เปลี่ยนจาก "user.score" เป็น "score" หากตรงกับโครงสร้าง Firestore
-			Value: score,
-		},
-		{
-			Path:  "updated_at",
-			Value: firestore.ServerTimestamp,
-		},
-	})
+	hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
+	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
 	if err != nil {
+		return http.StatusNotFound, errors.New("checkpoint not found")
+	}
+
+	var currentCheckpoint checkpoint_models.Checkpoints
+	if err := checkpointDoc.DataTo(&currentCheckpoint); err != nil {
 		return http.StatusInternalServerError, err
 	}
 
-	// อัปเดตโครงสร้าง user ใน local เพื่อใช้ส่งผ่าน WebSocket
-	user.Score = score
-	user.UpdatedAt = time.Now()
+	// ตรวจสอบว่าคะแนนมากกว่าหรือเท่ากับคะแนนที่ต้องผ่าน
+	if score >= currentCheckpoint.PassScore {
+		completedCheckpoint := checkpoint_models.CompleteCheckpoint{
+			CheckpointID: currentCheckpoint.ID,
+			Name:         currentCheckpoint.Name,
+			Category:     currentCheckpoint.Category,
+			Score:        score,
+		}
 
-	// ส่งการเปลี่ยนแปลงไปยัง WebSocket clients
-	config.BroadcastToClients(&user)
+		_, err = userDoc.Ref.Update(ctx, []firestore.Update{
+			{
+				Path:  "completed_checkpoint",
+				Value: firestore.ArrayUnion(completedCheckpoint),
+			},
+			{
+				Path:  "current_checkpoint",
+				Value: currentCheckpoint.NextCheckpoint,
+			},
+			{
+				Path:  "updated_at",
+				Value: time.Now(),
+			},
+		})
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
+
+		err = config.UpdateCurrentCheckpointInRealtimeDB(userId, currentCheckpoint.NextCheckpoint)
+		if err != nil {
+			log.Printf("Failed to update level in Realtime Database: %v\n", err)
+			return http.StatusInternalServerError, errors.New("failed to update current level in Realtime Database")
+		}
+	}
 
 	return http.StatusOK, nil
 }

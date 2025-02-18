@@ -198,7 +198,6 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 		return http.StatusInternalServerError, err
 	}
 
-	// ✅ ใช้ struct โดยตรงแทน map[string]interface{}
 	completeCheckpoint := &checkpoint_models.CompleteCheckpoint{
 		CheckpointID: currentCheckpoint.ID,
 		Name:         currentCheckpoint.Name,
@@ -220,10 +219,10 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 		var firestoreCheckpoints []map[string]interface{}
 		for _, c := range completedCheckpoints {
 			firestoreCheckpoints = append(firestoreCheckpoints, map[string]interface{}{
-				"CheckpointID": c.CheckpointID,
-				"Name":         c.Name,
-				"Category":     c.Category,
-				"Score":        c.Score,
+				"checkpoint_id": c.CheckpointID,
+				"name":          c.Name,
+				"category":      c.Category,
+				"score":         c.Score,
 			})
 		}
 
@@ -244,14 +243,17 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 
 		user.CompletedCheckpoints = completedCheckpoints
 
-		redisKey := fmt.Sprintf("user:%s", userID) // Key สำหรับ Redis
-		userData, _ := json.Marshal(user)
-		err = config.RedisClient.Set(ctx, redisKey, userData, 0).Err()
+		completedCheckpointsJSON, err := json.Marshal(completedCheckpoints)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("failed to encode data for Redis")
+		}
+
+		redisKey := fmt.Sprintf("user:%s", userID) // ใช้ key แบบ user:id
+		err = config.RedisClient.Set(ctx, redisKey, completedCheckpointsJSON, 0).Err()
 		if err != nil {
 			return http.StatusInternalServerError, errors.New("failed to update status in Redis")
 		}
 
-		config.BroadcastToClients(&user)
 	}
 
 	return http.StatusOK, nil
