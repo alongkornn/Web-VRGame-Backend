@@ -24,7 +24,7 @@ func InitFirebase() {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	// ✅ เชื่อมต่อ Firestore
+	
 	opt := option.WithCredentialsFile(credentialsFile)
 	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
