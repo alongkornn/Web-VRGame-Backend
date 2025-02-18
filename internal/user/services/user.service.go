@@ -382,16 +382,17 @@ func UpdateStatusPlayer(id string, status string, ctx context.Context) (int, err
 		return http.StatusInternalServerError, err
 	}
 
-	// อัปเดตข้อมูลใน Redis
-	redisKey := fmt.Sprintf("user:%s", id) // ใช้ key แบบ user:id
-	err = config.RedisClient.Set(ctx, redisKey, status, 0).Err()
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to update status in Redis")
-	}
+	// // อัปเดตข้อมูลใน Redis
+	// redisKey := fmt.Sprintf("user:%s", id) // ใช้ key แบบ user:id
+	// err = config.RedisClient.Set(ctx, redisKey, status, 0).Err()
+	// if err != nil {
+	// 	return http.StatusInternalServerError, errors.New("failed to update status in Redis")
+	// }
 
-	// Broadcast ข้อมูลที่อัปเดตไปยัง WebSocket
-	user.Status = status // อัปเดตสถานะผู้เล่นในตัวแปร user
-	config.BroadcastToClients(&user)
+	err = config.UpdateStatusInRealtimeDB(id, status)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to update status in realtime database")
+	}
 
 	return http.StatusOK, nil
 }
