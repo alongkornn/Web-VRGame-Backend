@@ -129,7 +129,7 @@ func UpdateStatusInRealtimeDB(id string, status string) error {
 	return nil
 }
 
-func UpdateCurrentCheckpointInRealtimeDB(userID string, currentCheckpointID string) error {
+func UpdateCurrentCheckpointInRealtimeDB(userID string, currentCheckpointID string, score int) error {
 	// ตรวจสอบว่า currentCheckpointID ไม่เป็นค่าว่าง
 	if currentCheckpointID == "" {
 		return fmt.Errorf("invalid checkpoint ID")
@@ -141,6 +141,7 @@ func UpdateCurrentCheckpointInRealtimeDB(userID string, currentCheckpointID stri
 	// สร้างข้อมูลที่ต้องการอัปเดต
 	updateData := map[string]interface{}{
 		"currentCheckpoint": currentCheckpointID,
+		"score":             score,
 	}
 
 	// แปลงข้อมูลเป็น JSON

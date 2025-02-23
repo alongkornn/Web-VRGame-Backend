@@ -108,22 +108,23 @@ func GetAllPlayer(ctx context.Context) ([]*auth_models.User, int, error) {
 
 func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
 	// สร้าง key สำหรับ Redis
-	cacheKey := "user:all"
+	// cacheKey := "user:all"
 
-	// 1. ตรวจสอบข้อมูลใน Redis ก่อน
-	cachedData, err := config.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil && cachedData != "" {
-		// ถ้ามีข้อมูลใน Redis แปลง JSON เป็น struct
-		var users []*auth_models.User
-		if err := json.Unmarshal([]byte(cachedData), &users); err == nil {
-			return users, http.StatusOK, nil
-		}
-	}
+	// // 1. ตรวจสอบข้อมูลใน Redis ก่อน
+	// cachedData, err := config.RedisClient.Get(ctx, cacheKey).Result()
+	// if err == nil && cachedData != "" {
+	// 	// ถ้ามีข้อมูลใน Redis แปลง JSON เป็น struct
+	// 	var users []*auth_models.User
+	// 	if err := json.Unmarshal([]byte(cachedData), &users); err == nil {
+	// 		return users, http.StatusOK, nil
+	// 	}
+	// }
 
 	// 2. ถ้าไม่มีข้อมูลใน Redis -> ดึงข้อมูลจาก Firestore
 	iter := config.DB.Collection("User").
 		Where("is_deleted", "==", false).
 		Where("status", "==", "approved").
+		Where("role", "==", "player").
 		Documents(ctx)
 
 	defer iter.Stop()
@@ -148,14 +149,14 @@ func GetAllUser(ctx context.Context) ([]*auth_models.User, int, error) {
 		users = append(users, &user)
 	}
 
-	// 3. แคชข้อมูลลงใน Redis
-	if len(users) > 0 {
-		data, err := json.Marshal(users)
-		if err == nil {
-			// ตั้งค่าความหมดอายุ (เช่น 10 นาที)
-			config.RedisClient.Set(ctx, cacheKey, data, 10*time.Minute)
-		}
-	}
+	// // 3. แคชข้อมูลลงใน Redis
+	// if len(users) > 0 {
+	// 	data, err := json.Marshal(users)
+	// 	if err == nil {
+	// 		// ตั้งค่าความหมดอายุ (เช่น 10 นาที)
+	// 		config.RedisClient.Set(ctx, cacheKey, data, 10*time.Minute)
+	// 	}
+	// }
 
 	return users, http.StatusOK, nil
 }

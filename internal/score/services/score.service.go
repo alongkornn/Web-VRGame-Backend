@@ -126,6 +126,8 @@ func SetScore(userId string, score int, ctx context.Context) (int, error) {
 			Score:        score,
 		}
 
+		sumScore := user.Score + score
+
 		_, err = userDoc.Ref.Update(ctx, []firestore.Update{
 			{
 				Path:  "completed_checkpoint",
@@ -136,6 +138,10 @@ func SetScore(userId string, score int, ctx context.Context) (int, error) {
 				Value: currentCheckpoint.NextCheckpoint,
 			},
 			{
+				Path:  "score",
+				Value: sumScore,
+			},
+			{
 				Path:  "updated_at",
 				Value: time.Now(),
 			},
@@ -144,7 +150,7 @@ func SetScore(userId string, score int, ctx context.Context) (int, error) {
 			return http.StatusInternalServerError, err
 		}
 
-		err = config.UpdateCurrentCheckpointInRealtimeDB(userId, currentCheckpoint.NextCheckpoint)
+		err = config.UpdateCurrentCheckpointInRealtimeDB(userId, currentCheckpoint.NextCheckpoint, sumScore)
 		if err != nil {
 			log.Printf("Failed to update level in Realtime Database: %v\n", err)
 			return http.StatusInternalServerError, errors.New("failed to update current level in Realtime Database")

@@ -24,7 +24,7 @@ type User struct {
 	Role                 Role                                    `json:"role" firestore:"role"`
 	Status               string                                  `json:"status" firestore:"status"`
 	CurrentCheckpoint    string                                  `json:"current_checkpoint,omitempty" firestore:"current_checkpoint,omitempty"` // id ของ checkpoint ที่กำลังเล่นอยู่
-	CompletedCheckpoints []*checkpoint_models.CompleteCheckpoint `json:"completed_checkpoints,omitempty" firestore:"completed_checkpoints,omitempty"`
+	CompletedCheckpoints []*checkpoint_models.CompleteCheckpoint `json:"completed_checkpoint,omitempty" firestore:"completed_checkpoint,omitempty"`
 	Time                 string                                  `json:"time,omitempty" firestore:"time,omitempty"`
 	CreatedAt            time.Time                               `json:"created_at" firestore:"created_at"`
 	UpdatedAt            time.Time                               `json:"updated_at" firestore:"updated_at"`
