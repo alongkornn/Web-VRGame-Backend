@@ -19,78 +19,63 @@ import (
 )
 
 // แสดงด่านปัจจุบันของผู้เล่น(โดยจะเข้าถึงผ่านไอดีของผู้เล่น)
-func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) (*checkpoint_models.Checkpoints, int, error) {
-	// ใช้ฟังก์ชัน GetRedisKeys เพื่อดึงคีย์
-	userCacheKey, checkpointCacheKey := utils.GetRedisKeys(userId)
-
-	// 1. ตรวจสอบใน Redis ก่อน
-	cachedUser, err := config.RedisClient.Get(ctx, userCacheKey).Result()
-	if err == nil {
-		var user auth_models.User
-		if err := json.Unmarshal([]byte(cachedUser), &user); err == nil {
-			// ดึง Checkpoint จาก Redis ถ้ามี
-			cachedCheckpoint, err := config.RedisClient.Get(ctx, checkpointCacheKey).Result()
-			if err == nil {
-				var currentCheckpoint checkpoint_models.Checkpoints
-				if err := json.Unmarshal([]byte(cachedCheckpoint), &currentCheckpoint); err == nil {
-
-					return &currentCheckpoint, http.StatusOK, nil
-				}
-			}
-		}
-	}
-
-	// 2. ถ้าไม่มีใน Redis -> ไปดึงข้อมูลจาก Firestore
-	// ใช้ Query เพื่อตรวจสอบผู้ใช้ใน Firestore
+func GetCurrentCheckpointFromUserId(userId string, ctx context.Context) ([]checkpoint_models.Checkpoints, int, error) {
+	// ตรวจสอบว่าผู้ใช้มีอยู่จริงหรือไม่
 	userQuery := utils.HasUser(userId)
 	userSnapshot, err := userQuery.Documents(ctx).GetAll()
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("error querying Firestore: %v", err)
 	}
 
-	// ตรวจสอบว่าผู้ใช้มีในฐานข้อมูลหรือไม่
 	if len(userSnapshot) == 0 {
 		return nil, http.StatusNotFound, errors.New("user not found")
 	}
 
-	// ดึงข้อมูลผู้ใช้จาก snapshot
+	// ดึงข้อมูลผู้ใช้
 	var user auth_models.User
 	if err := userSnapshot[0].DataTo(&user); err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("error unmarshaling user data: %v", err)
 	}
 
 	// ตรวจสอบว่าผู้ใช้มี current checkpoint หรือไม่
-	if user.CurrentCheckpoint == "" {
-		return nil, http.StatusBadRequest, errors.New("user has no current checkpoint")
+	checkpointIDs := []string{
+		user.ProjectileCurrentCheckpoint,
+		user.MomentumCurrentCheckpoint,
+		user.ForceCurrentCheckpoint,
 	}
 
-	// ดึง DocumentRef สำหรับ checkpoint จาก user.CurrentCheckpoint
-	checkpointQuery := config.DB.Collection("Checkpoint").Where("id", "==", user.CurrentCheckpoint)
-
-	// ดึงข้อมูลจาก DocumentRef ของ checkpoint
-	checkpointSnapshot, err := checkpointQuery.Documents(ctx).GetAll()
-	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("error getting checkpoint: %v", err)
+	// ตรวจสอบว่ามี checkpoint ไหนที่ยังไม่ได้กำหนด
+	for _, checkpointID := range checkpointIDs {
+		if checkpointID == "" {
+			return nil, http.StatusBadRequest, errors.New("user does not have all required checkpoints")
+		}
 	}
 
-	// ตรวจสอบว่าด่านใช้มีในฐานข้อมูลหรือไม่
-	if len(checkpointSnapshot) == 0 {
-		return nil, http.StatusNotFound, errors.New("checkpoint not found")
+	// สร้าง slice สำหรับเก็บ Checkpoints
+	var currentCheckpoints []checkpoint_models.Checkpoints
+
+	// ดึงข้อมูลจาก Firestore
+	for _, checkpointID := range checkpointIDs {
+		checkpointQuery := config.DB.Collection("Checkpoint").Where("id", "==", checkpointID)
+		checkpointSnapshot, err := checkpointQuery.Documents(ctx).GetAll()
+		if err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error getting checkpoint: %v", err)
+		}
+		if len(checkpointSnapshot) == 0 {
+			return nil, http.StatusNotFound, fmt.Errorf("checkpoint not found: %s", checkpointID)
+		}
+
+		// แปลงข้อมูลจาก Firestore เป็น struct
+		var checkpoint checkpoint_models.Checkpoints
+		if err := checkpointSnapshot[0].DataTo(&checkpoint); err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error unmarshaling checkpoint data: %v", err)
+		}
+
+		// เพิ่ม Checkpoint ลงใน Slice
+		currentCheckpoints = append(currentCheckpoints, checkpoint)
 	}
 
-	var currentCheckpoint checkpoint_models.Checkpoints
-	if err := checkpointSnapshot[0].DataTo(&currentCheckpoint); err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("error unmarshaling checkpoint data: %v", err)
-	}
-
-	// 3. เก็บข้อมูลลง Redis
-	userData, _ := json.Marshal(user)
-	config.RedisClient.Set(ctx, userCacheKey, userData, 10*time.Minute)
-
-	checkpointData, _ := json.Marshal(currentCheckpoint)
-	config.RedisClient.Set(ctx, checkpointCacheKey, checkpointData, 10*time.Minute)
-
-	return &currentCheckpoint, http.StatusOK, nil
+	return currentCheckpoints, http.StatusOK, nil
 }
 
 // แสดงด่านทั้งหมดทุกหมวดหมู่
@@ -171,7 +156,7 @@ func CreateCheckpoint(checkpointDTO dto.CreateCheckpointsDTO, ctx context.Contex
 }
 
 // บันทึกด่านปัจจุบันลงในด่านที่เล่นผ่านแล้วโดยจะตรวจสอบว่าคะแนนผ่านเกณฑ์หรือยัง
-func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (int, error) {
+func SaveCheckpointToComplete(userID string, score int, time string, ctx context.Context) (int, error) {
 	// ตรวจสอบว่ามีผู้ใช้หรือไม่
 	hasUser := utils.HasUser(userID)
 	userDoc, err := hasUser.Documents(ctx).Next()
@@ -186,7 +171,7 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 	}
 
 	// ตรวจสอบว่ามี Checkpoint ปัจจุบันหรือไม่
-	hasCheckpoint := utils.GetCheckpointByID(user.CurrentCheckpoint)
+	hasCheckpoint := utils.GetCheckpointByID(user.ProjectileCurrentCheckpoint)
 	checkpointDoc, err := hasCheckpoint.Documents(ctx).Next()
 	if err != nil {
 		return http.StatusNotFound, errors.New("checkpoint not found")
@@ -203,6 +188,7 @@ func SaveCheckpointToComplete(userID string, score int, ctx context.Context) (in
 		Name:         currentCheckpoint.Name,
 		Category:     currentCheckpoint.Category,
 		Score:        score,
+		Time:         time,
 	}
 
 	// ตรวจสอบว่าผู้ใช้ผ่าน checkpoint หรือไม่
@@ -336,35 +322,4 @@ func GetCheckpointWithCategory(category string, ctx context.Context) ([]*checkpo
 		checkpoints = append(checkpoints, &checkpoint)
 	}
 	return checkpoints, http.StatusOK, nil
-}
-
-// เพิ่มเวลาในด่านปัจจุบัน
-func SetTime(userId string, time time.Duration, ctx context.Context) (int, error) {
-	hasUser := utils.HasUser(userId)
-
-	userDoc, err := hasUser.Documents(ctx).GetAll()
-	if err != nil || len(userDoc) == 0 {
-		return http.StatusBadRequest, errors.New("user not found")
-	}
-
-	var user auth_models.User
-	if err := userDoc[0].DataTo(&user); err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	_, err = userDoc[0].Ref.Update(ctx, []firestore.Update{
-		{
-			Path:  "user.current_checkpoint.time",
-			Value: time,
-		},
-		{
-			Path:  "updated_at",
-			Value: firestore.ServerTimestamp,
-		},
-	})
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	return http.StatusOK, nil
 }

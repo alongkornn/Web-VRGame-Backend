@@ -48,20 +48,22 @@ func Register(ctx context.Context, registerDTO dto.RegisterDTO) (int, error) {
 	currentTime := time.Now()
 
 	user := auth_models.User{
-		ID:                   userID,
-		FirstName:            registerDTO.FirstName,
-		LastName:             registerDTO.LastName,
-		Email:                registerDTO.Email,
-		Password:             string(hashPassword),
-		Score:                0,
-		CurrentCheckpoint:    "283dd16a-a0ed-436d-a017-49689c5c9604",
-		CompletedCheckpoints: nil,
-		Role:                 auth_models.Player,
-		Status:               "pending",
-		CreatedAt:            currentTime,
-		UpdatedAt:            currentTime,
-		VerifyEmail:          false,
-		Is_Deleted:           false,
+		ID:                          userID,
+		FirstName:                   registerDTO.FirstName,
+		LastName:                    registerDTO.LastName,
+		Email:                       registerDTO.Email,
+		Password:                    string(hashPassword),
+		Score:                       0,
+		ProjectileCurrentCheckpoint: "283dd16a-a0ed-436d-a017-49689c5c9604",
+		MomentumCurrentCheckpoint:   "3b6a617f-085c-4c4f-a0df-9b63a201f631",
+		ForceCurrentCheckpoint:      "a882c305-b3c1-4e82-8e96-d0b839c8d67d",
+		CompletedCheckpoints:        nil,
+		Role:                        auth_models.Player,
+		Status:                      "pending",
+		CreatedAt:                   currentTime,
+		UpdatedAt:                   currentTime,
+		VerifyEmail:                 false,
+		Is_Deleted:                  false,
 	}
 
 	// บันทึกลง Firestore

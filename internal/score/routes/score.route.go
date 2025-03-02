@@ -9,6 +9,8 @@ func ScoreRoute(e *echo.Group) {
 	scoreGroup := e.Group("/score")
 
 	scoreGroup.POST("/get/score/:userId", controllers.GetScoreByUserId)
-	scoreGroup.POST("/get/score/:checkpointId", controllers.GetAllScoreByCheckpointId)
-	scoreGroup.POST("/set/:userId", controllers.SetScore)
+	// scoreGroup.POST("/get/score/:checkpointId", controllers.GetAllScoreByCheckpointId)
+	scoreGroup.POST("/set/projectile/:userId", controllers.SetProjectileScore)
+	scoreGroup.POST("/set/momentum/:userId", controllers.SetMomentumScore)
+	scoreGroup.POST("/set/force/:userId", controllers.SetForceScore)
 }

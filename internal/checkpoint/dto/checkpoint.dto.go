@@ -27,5 +27,6 @@ type SetTimeDTO struct {
 }
 
 type SetScoreDTO struct {
-	Score int `json:"score"`
+	Score int    `json:"score"`
+	Time  string `json:"time"`
 }

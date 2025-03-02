@@ -30,6 +30,7 @@ type CompleteCheckpoint struct {
 	Name         string   `json:"name" firestore:"name"`
 	Category     Category `json:"category" firestore:"category"`
 	Score        int      `json:"score" firestore:"score"`
+	Time         string   `json:"time" firestore:"time"`
 }
 
 type CheckpointDetail struct {
