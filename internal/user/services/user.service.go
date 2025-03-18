@@ -410,10 +410,5 @@ func UpdateStatusPlayer(id string, status string, ctx context.Context) (int, err
 		return http.StatusInternalServerError, err
 	}
 
-	err = config.UpdateStatusInRealtimeDB(id, status)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to update status in realtime database")
-	}
-
 	return http.StatusOK, nil
 }
