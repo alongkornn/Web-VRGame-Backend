@@ -27,5 +27,9 @@ func UserRoute(e *echo.Group) {
 	// รวมคะแนนทั้งที่ผู้เล่นทำได้
 	userGroup.POST("/set/sumscore/:userId", controllers.SetSumSocore)
 	// ดึงข้อมูลผู้ใช้โดยเรียงคะแนนจากมากไปน้อย
+
 	userGroup.GET("/sort/score", controllers.GetUserBySortScore, middlewares.JWTMiddleware((config.GetEnv("jwt.secret_key"))))
+	
+	userGroup.DELETE("/:userId", controllers.DeleteUser)
+
 }

@@ -21,7 +21,7 @@ func AdminRoute(g *echo.Group) {
 	// ลบผู้ดูแลระบบออก
 	adminGroup.DELETE("/delete/admin/:adminId", controllers.RemoveAdmin)
 	// แก้ไขข้อมูลผู้ดูแลระบบ
-	adminGroup.PUT("/update/admin/:adminId", controllers.UpdateDataAdmin)
+	adminGroup.PUT("/:adminId", controllers.UpdateDataAdmin)
 	// แก้ไขรหัสผ่านผู้ดูแลระบบ
 	adminGroup.PUT("/updatepassword/admin/:adminId", controllers.UpdatePasswordAdmin)
 	// แสดงจุดเด่นของผู้เล่นว่าเด่นในด้านไหน

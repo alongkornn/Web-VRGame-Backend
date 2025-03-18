@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -73,17 +72,7 @@ func Register(ctx context.Context, registerDTO dto.RegisterDTO) (int, error) {
 		return http.StatusInternalServerError, errors.New("failed to register user")
 	}
 
-	// ใช้ฟังก์ชัน AddToRealtimeDB() แทนการเรียก API ตรงๆ
-	err = config.AddToRealtimeDB(userID, map[string]interface{}{
-		"currentCheckpoint": "283dd16a-a0ed-436d-a017-49689c5c9604",
-		"score":             0,
-		"status":            "pending",
-		"time":              "",
-	})
-	if err != nil {
-		log.Printf("Failed to register user in Realtime Database: %v\n", err)
-		return http.StatusInternalServerError, fmt.Errorf("failed to register user in Realtime Database: %v", err)
-	}
+	
 
 	return http.StatusOK, nil
 }

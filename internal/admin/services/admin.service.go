@@ -2,11 +2,8 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/alongkornn/Web-VRGame-Backend/config"
@@ -158,18 +155,6 @@ func GetAllAdmin(ctx context.Context) ([]*auth_models.User, int, error) {
 
 // แสดงผู้ดูแลระบบโดยเข้าถึงผ่านไอดีผู้ดูแลระบบ
 func GetAdminById(adminId string, ctx context.Context) (*auth_models.User, int, error) {
-	// สร้าง key สำหรับ Redis
-	adminCacheKey := fmt.Sprintf("admin:%s", adminId)
-
-	// 1. ตรวจสอบใน Redis ก่อน
-	cachedAdmin, err := config.RedisClient.Get(ctx, adminCacheKey).Result()
-	if err == nil {
-		var admin auth_models.User
-		// หากมีข้อมูลใน Redis ก็จะนำมาใช้เลย
-		if err := json.Unmarshal([]byte(cachedAdmin), &admin); err == nil {
-			return &admin, http.StatusOK, nil
-		}
-	}
 
 	// 2. ถ้าไม่มีใน Redis -> ไปดึงข้อมูลจาก Firestore
 	hasAdmin := utils.HasAdmin(adminId)
@@ -183,10 +168,6 @@ func GetAdminById(adminId string, ctx context.Context) (*auth_models.User, int, 
 	if err := adminDoc.DataTo(&admin); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-
-	// 3. เก็บข้อมูลลง Redis
-	adminData, _ := json.Marshal(admin)
-	config.RedisClient.Set(ctx, adminCacheKey, adminData, 10*time.Minute) // ตั้งเวลาหมดอายุใน Redis เป็น 10 นาที
 
 	return &admin, http.StatusOK, nil
 }

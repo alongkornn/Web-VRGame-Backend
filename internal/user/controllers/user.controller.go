@@ -40,6 +40,18 @@ func GetAllUser(ctx echo.Context) error {
 	return utils.SendSuccess(ctx, status, "Successfully to get User", users)
 }
 
+func DeleteUser(ctx echo.Context) error {
+	id := ctx.Param("userId")
+
+	status, err := services.DeleteUser(id, ctx.Request().Context())
+	if err != nil {
+		return utils.SendError(ctx, status, err.Error(), nil)
+	}
+
+	return utils.SendSuccess(ctx, status, "Successfully to Deleted", nil)
+	
+}
+
 // แสดงผู้เล่นที่ยังไม่ได้อนุมัติ
 func GetUserPending(ctx echo.Context) error {
 	users, status, err := services.GetUserPending(ctx.Request().Context())

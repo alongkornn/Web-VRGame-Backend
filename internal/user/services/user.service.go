@@ -51,6 +51,33 @@ func GetUserByID(userId string, ctx context.Context) (*auth_models.User, int, er
 	return &user, http.StatusOK, nil
 }
 
+func DeleteUser(userId string, ctx context.Context) (int, error) {
+	// ตรวจสอบว่าผู้ใช้มีอยู่หรือไม่
+	hasUser := utils.HasUser(userId)
+	userDoc, err := hasUser.Documents(ctx).Next()
+	if err != nil {
+		return http.StatusNotFound, errors.New("user not found")
+	}
+
+	// อัปเดตฟิลด์ is_deleted เป็น true
+	_, err = userDoc.Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "is_deleted",
+			Value: true,
+		},
+		{
+			Path:  "updated_at",
+			Value: time.Now(),
+		},
+	})
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}
+
 // แสดงผู้เล่นทั้งหมด
 func GetAllPlayer(ctx context.Context) ([]*auth_models.User, int, error) {
 	// สร้าง key สำหรับ Redis
@@ -382,13 +409,6 @@ func UpdateStatusPlayer(id string, status string, ctx context.Context) (int, err
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
-
-	// // อัปเดตข้อมูลใน Redis
-	// redisKey := fmt.Sprintf("user:%s", id) // ใช้ key แบบ user:id
-	// err = config.RedisClient.Set(ctx, redisKey, status, 0).Err()
-	// if err != nil {
-	// 	return http.StatusInternalServerError, errors.New("failed to update status in Redis")
-	// }
 
 	err = config.UpdateStatusInRealtimeDB(id, status)
 	if err != nil {

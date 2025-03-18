@@ -122,6 +122,7 @@ func SetProjectileScore(userId string, score int, playTime string, ctx context.C
 			if completed.Score < score {
 				// อัปเดตคะแนนด่านที่เคยเล่นผ่าน
 				user.CompletedCheckpoints[i].Score = score
+				user.CompletedCheckpoints[i].Time = playTime
 
 				// คำนวณคะแนนรวมใหม่
 				newScore := user.Score + (score - completed.Score)
@@ -168,7 +169,7 @@ func SetProjectileScore(userId string, score int, playTime string, ctx context.C
 				Value: firestore.ArrayUnion(completedCheckpoint),
 			},
 			{
-				Path:  "current_checkpoint",
+				Path:  "projectilecurrent_checkpoint",
 				Value: currentCheckpoint.NextCheckpoint,
 			},
 			{
@@ -221,6 +222,7 @@ func SetMomentumScore(userId string, score int, playTime string, ctx context.Con
 			if completed.Score < score {
 				// อัปเดตคะแนนด่านที่เคยเล่นผ่าน
 				user.CompletedCheckpoints[i].Score = score
+				user.CompletedCheckpoints[i].Time = playTime
 
 				// คำนวณคะแนนรวมใหม่
 				newScore := user.Score + (score - completed.Score)
@@ -267,7 +269,7 @@ func SetMomentumScore(userId string, score int, playTime string, ctx context.Con
 				Value: firestore.ArrayUnion(completedCheckpoint),
 			},
 			{
-				Path:  "current_checkpoint",
+				Path:  "momentumcurrent_checkpoint",
 				Value: currentCheckpoint.NextCheckpoint,
 			},
 			{
@@ -319,6 +321,7 @@ func SetForceScore(userId string, score int, playTime string, ctx context.Contex
 			if completed.Score < score {
 				// อัปเดตคะแนนด่านที่เคยเล่นผ่าน
 				user.CompletedCheckpoints[i].Score = score
+				user.CompletedCheckpoints[i].Time = playTime
 
 				// คำนวณคะแนนรวมใหม่
 				newScore := user.Score + (score - completed.Score)
@@ -365,7 +368,7 @@ func SetForceScore(userId string, score int, playTime string, ctx context.Contex
 				Value: firestore.ArrayUnion(completedCheckpoint),
 			},
 			{
-				Path:  "current_checkpoint",
+				Path:  "forcecurrent_checkpoint",
 				Value: currentCheckpoint.NextCheckpoint,
 			},
 			{
