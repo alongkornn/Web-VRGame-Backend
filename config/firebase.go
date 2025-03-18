@@ -11,7 +11,6 @@ import (
 )
 
 var DB *firestore.Client
-var databaseURL = "https://gamevr-88a69-default-rtdb.asia-southeast1.firebasedatabase.app/"
 
 func InitFirebase() {
 	credentialsFile := "/Users/alongkorn/Desktop/gamevr-88a69-firebase-adminsdk-ukt0n-7e6e34d649.json"
